@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>투자 손익 계산기</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div class="header-bar">
+        <h2>📈 투자 손익 계산기</h2>
+        <p>손익 및 수익률을 미리 계산해 보세요.</p>
+    </div>
+
+    <div class="calculator-container">
+        <form id="stock-calculator-form">
+            
+            <h3>기본 정보 입력</h3>
+
+            <!-- 기본 입력 (분할 매수 0일 때) -->
+            <div id="default-inputs">
+                <div class="input-group">
+                    <label for="purchase-price">매수가 (원)</label>
+                    <input type="text" id="purchase-price" placeholder="예: 10,000">
+                </div>
+                <div class="input-group">
+                    <!-- '투자금액'에서 '매수수량'으로 변경 -->
+                    <label for="purchase-quantity">매수수량 (주)</label>
+                    <input type="number" id="purchase-quantity" placeholder="예: 100" min="1">
+                </div>
+            </div>
+            
+            <!-- 목표가/목표율 (상호작용) -->
+            <div class="input-group-row">
+                <div class="input-group">
+                    <label for="target-price">목표가 (원)</label>
+                    <input type="text" id="target-price" placeholder="예: 15,000">
+                </div>
+                <div class="input-group">
+                    <label for="target-rate">목표율 (%)</label>
+                    <input type="text" id="target-rate" placeholder="예: 50.00">
+                </div>
+            </div>
+
+            <hr>
+            
+            <h3>분할 매수/매도 설정</h3>
+
+            <!-- 분할 매수 -->
+            <div class="input-group">
+                <label for="split-buys">분할매수 횟수 (0~30회)</label>
+                <input type="number" id="split-buys" min="0" max="30" value="0">
+            </div>
+            <!-- 분할 매수 동적 입력란 -->
+            <div id="split-buy-inputs" class="dynamic-inputs-container"></div>
+
+            <!-- 분할 매도 -->
+            <div class="input-group">
+                <label for="split-sells">분할매도 횟수 (0~30회)</label>
+                <input type="number" id="split-sells" min="0" max="30" value="0">
+            </div>
+            <!-- 분할 매도 동적 입력란 -->
+            <div id="split-sell-inputs" class="dynamic-inputs-container"></div>
+
+            <button type="submit" id="calculate-btn">계산하기</button>
+        </form>
+
+        <!-- 결과 표시 영역 -->
+        <div id="results-container">
+            <h3>📊 계산 결과</h3>
+            <p id="result-text" class="neutral">
+                손익액 <strong>0</strong>원 (손익율 <strong>0.00</strong>%)
+            </p>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
