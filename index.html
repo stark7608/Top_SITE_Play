@@ -3,148 +3,70 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>주식 투자 계산기</title>
-    <link rel="stylesheet" href="styles.css">
+    <title>주식 손익 계산기</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="container">
-        <header>
-            <h1>📈 주식 투자 계산기</h1>
-            <p>단리와 복리를 선택하여 투자 수익을 계산해보세요</p>
-        </header>
 
-        <main>
-            <div class="calculator-card">
-                <h2>기본 정보 입력</h2>
-                
-                <div class="input-group">
-                    <label for="initialAmount">예치금액 (원)</label>
-                    <input type="text" id="initialAmount" placeholder="예: 1,000,000" tabindex="1">
-                </div>
-
-                <div class="input-group">
-                    <label for="monthlyDeposit">월납입액 (원)</label>
-                    <input type="text" id="monthlyDeposit" placeholder="예: 100,000" tabindex="2">
-                </div>
-
-                <div class="input-group">
-                    <label for="period">거치기간</label>
-                    <div class="period-input">
-                        <input type="number" id="period" placeholder="예: 12" min="0" step="1" tabindex="3">
-                        <select id="periodUnit" tabindex="4">
-                            <option value="year">년</option>
-                            <option value="month">개월</option>
-                            <option value="day">일</option>
-                        </select>
-                    </div>
-                </div>
-
-                <div class="input-group">
-                    <label for="interestRate">수익률 (%)</label>
-                    <input type="number" id="interestRate" placeholder="예: 5.5" min="0" step="0.1" tabindex="5">
-                </div>
-
-                <div class="input-group">
-                    <label for="dividendRate">배당율 (%)</label>
-                    <input type="number" id="dividendRate" placeholder="예: 3.0" min="0" step="0.1" tabindex="6">
-                </div>
-
-                <div class="input-group">
-                    <label>이자 계산 방식</label>
-                    <div class="radio-group">
-                        <label class="radio-label">
-                            <input type="radio" name="calculationType" value="simple" checked tabindex="7">
-                            <span>단리</span>
-                        </label>
-                        <label class="radio-label">
-                            <input type="radio" name="calculationType" value="compound" tabindex="7">
-                            <span>복리</span>
-                        </label>
-                    </div>
-                </div>
-
-                <div class="input-group checkbox-group">
-                    <label class="checkbox-label">
-                        <input type="checkbox" id="includeDividend" tabindex="8">
-                        <span>배당금 계산 포함</span>
-                    </label>
-                </div>
-
-                <div class="input-group dividend-options" id="dividendOptionsGroup" style="display: none;">
-                    <label for="dividendFrequency">배당금 지급시기</label>
-                    <select id="dividendFrequency" tabindex="9">
-                        <option value="1">연 1회</option>
-                        <option value="2">반기 2회</option>
-                        <option value="4">분기 4회</option>
-                        <option value="12">매월 12회</option>
-                    </select>
-                </div>
-
-                <div class="input-group dividend-tax" id="dividendTaxGroup" style="display: none;">
-                    <label for="dividendTaxRate">배당소득세율 (%)</label>
-                    <input type="number" id="dividendTaxRate" placeholder="예: 15.4" min="0" max="100" step="0.1" tabindex="10">
-                </div>
-
-                <button id="calculateBtn" class="calculate-btn" tabindex="11">계산하기</button>
-            </div>
-
-            <div class="result-card" id="resultCard" style="display: none;">
-                <h2>계산 결과</h2>
-                <div class="calculation-type-badge" id="calculationTypeBadge"></div>
-                <div class="result-content">
-                    <div class="result-item">
-                        <span class="result-label">총 납입 원금</span>
-                        <span class="result-value" id="totalDeposit">-</span>
-                    </div>
-                    <div class="result-item">
-                        <span class="result-label" id="interestLabel">총 운용수익 (이자)</span>
-                        <span class="result-value" id="totalEarnings">-</span>
-                    </div>
-                    <div class="result-item" id="dividendReinvestmentResult" style="display: none;">
-                        <span class="result-label">총 배당금 재투자 원리합계 (세후)</span>
-                        <span class="result-value" id="dividendReinvestment">-</span>
-                    </div>
-                    <div class="result-item highlight">
-                        <span class="result-label" id="finalAmountLabel">총 예상 금액</span>
-                        <span class="result-value" id="finalAmount">-</span>
-                    </div>
-                    <div class="result-item" id="dividendDetailResult" style="display: none;">
-                        <div class="dividend-detail">
-                            <div class="detail-item">
-                                <span class="detail-label">총 배당금 (세전)</span>
-                                <span class="detail-value" id="totalDividend">-</span>
-                            </div>
-                            <div class="detail-item">
-                                <span class="detail-label">배당소득세</span>
-                                <span class="detail-value" id="dividendTax">-</span>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="comparison-section" id="comparisonSection" style="display: none;">
-                        <div class="comparison-header">
-                            <h3>📊 단리 vs 복리 비교</h3>
-                        </div>
-                        <div class="comparison-content">
-                            <div class="comparison-item">
-                                <span class="comparison-label">단리 최종 금액</span>
-                                <span class="comparison-value" id="simpleFinalAmount">-</span>
-                            </div>
-                            <div class="comparison-item">
-                                <span class="comparison-label">복리 최종 금액</span>
-                                <span class="comparison-value" id="compoundFinalAmount">-</span>
-                            </div>
-                            <div class="comparison-item highlight-comparison">
-                                <span class="comparison-label" id="betterTypeLabel">-</span>
-                                <span class="comparison-value highlight-value" id="differenceAmount">-</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </main>
+    <div class="header-bar">
+        <h2>📈 주식 투자 계산기</h2>
+        <p>손익 및 수익률을 미리 계산해 보세요.</p>
     </div>
 
-    <script src="calculator.js"></script>
-    <script src="main.js"></script>
+    <div class="calculator-container">
+        <form id="stock-calculator-form">
+            
+            <h3>기본 정보 입력</h3>
+
+            <div id="default-inputs">
+                <div class="input-group">
+                    <label for="investment-amount">투자금액 (원)</label>
+                    <input type="text" id="investment-amount" placeholder="예: 1,000,000">
+                </div>
+                <div class="input-group">
+                    <label for="purchase-price">매수가 (원)</label>
+                    <input type="text" id="purchase-price" placeholder="예: 10,000">
+                </div>
+            </div>
+            
+            <div class="input-group-row">
+                <div class="input-group">
+                    <label for="target-price">목표가 (원)</label>
+                    <input type="text" id="target-price" placeholder="예: 15,000">
+                </div>
+                <div class="input-group">
+                    <label for="target-rate">목표율 (%)</label>
+                    <input type="text" id="target-rate" placeholder="예: 50.00">
+                </div>
+            </div>
+
+            <hr>
+            
+            <h3>분할 매수/매도 설정 </h3>
+
+            <div class="input-group">
+                <label for="split-buys">분할매수 횟수 (0~30회)</label>
+                <input type="number" id="split-buys" min="0" max="30" value="0">
+            </div>
+            <div id="split-buy-inputs" class="dynamic-inputs-container"></div>
+
+            <div class="input-group">
+                <label for="split-sells">분할매도 횟수 (0~30회)</label>
+                <input type="number" id="split-sells" min="0" max="30" value="0">
+            </div>
+            <div id="split-sell-inputs" class="dynamic-inputs-container"></div>
+
+            <button type="submit" id="calculate-btn">계산하기</button>
+        </form>
+
+        <div id="results-container">
+            <h3>📊 계산 결과</h3>
+            <p id="result-text" class="neutral">
+                손익액 <strong>0</strong>원 (손익율 <strong>0.00</strong>%)
+            </p>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
 </body>
 </html>
