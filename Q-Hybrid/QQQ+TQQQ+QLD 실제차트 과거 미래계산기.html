@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Q-Hybrid 마스터 계산기</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --primary: #1e3a8a; --bg: #f8fafc; --card: #fff; --border: #cbd5e1;
+            --accent: #f59e0b; --success: #10b981; --danger: #ef4444; --text: #334155;
+        }
+        body { font-family: 'Pretendard', -apple-system, sans-serif; background: var(--bg); padding: 20px; color: var(--text); margin: 0; }
+        .container { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: 380px 1fr; gap: 20px; }
+
+        /* 입력 패널 */
+        .input-panel { background: var(--card); padding: 25px; border-radius: 16px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); height: fit-content; }
+        h2 { margin-top: 0; font-size: 1.3rem; color: var(--primary); border-bottom: 2px solid var(--border); padding-bottom: 15px; margin-bottom: 20px; }
+        
+        /* [추가] 코랩 가이드 박스 스타일 */
+        .guide-box { background: #eff6ff; border: 1px solid #bfdbfe; padding: 15px; border-radius: 10px; margin-bottom: 25px; }
+        .guide-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .guide-title { font-weight: bold; color: #1e40af; font-size: 0.9rem; display: flex; align-items: center; gap: 6px; }
+        .colab-link { background-color: #2563eb; color: white; text-decoration: none; padding: 6px 12px; border-radius: 6px; font-size: 0.8rem; font-weight: bold; transition: 0.2s; box-shadow: 0 2px 4px rgba(37, 99, 235, 0.2); }
+        .colab-link:hover { background-color: #1d4ed8; transform: translateY(-1px); }
+        .code-wrapper { position: relative; background: #1e293b; border-radius: 8px; overflow: hidden; border: 1px solid #475569; }
+        .code-content { color: #e2e8f0; font-family: 'Consolas', 'Monaco', monospace; font-size: 0.75rem; padding: 15px; margin: 0; white-space: pre; overflow-x: auto; line-height: 1.5; }
+        .copy-button { position: absolute; top: 8px; right: 8px; background: rgba(255,255,255,0.15); color: white; border: 1px solid rgba(255,255,255,0.2); padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 0.7rem; transition: 0.2s; }
+        .copy-button:hover { background: rgba(255,255,255,0.3); }
+
+        .section-title { font-size: 0.85rem; font-weight: 700; color: #64748b; margin: 25px 0 10px 0; text-transform: uppercase; letter-spacing: 0.5px; border-left: 3px solid var(--accent); padding-left: 10px; }
+
+        /* 전략 선택 */
+        .strat-selector { display: flex; gap: 10px; margin-bottom: 20px; }
+        .strat-btn { flex: 1; padding: 12px; border: 1px solid var(--border); border-radius: 8px; background: #f1f5f9; cursor: pointer; font-weight: bold; color: #64748b; transition: 0.2s; }
+        .strat-btn.active-1 { background: var(--accent); color: white; border-color: var(--accent); box-shadow: 0 2px 5px rgba(245,158,11,0.3); }
+        .strat-btn.active-2 { background: var(--success); color: white; border-color: var(--success); box-shadow: 0 2px 5px rgba(16,185,129,0.3); }
+
+        /* 파일 업로드 그룹 */
+        .file-group { display: flex; flex-direction: column; gap: 8px; }
+        .file-row { display: flex; align-items: center; gap: 10px; }
+        .file-label { font-size: 0.9rem; font-weight: bold; width: 50px; }
+        .file-input-box { flex: 1; position: relative; overflow: hidden; background: #f8fafc; border: 1px solid var(--border); border-radius: 6px; padding: 8px; cursor: pointer; font-size: 0.8rem; color: #94a3b8; text-align: center; transition: 0.2s; }
+        .file-input-box input { position: absolute; width: 100%; height: 100%; top: 0; left: 0; opacity: 0; cursor: pointer; }
+        .file-input-box.done { background: #ecfdf5; color: #059669; border-color: #10b981; font-weight: bold; }
+
+        /* 폼 입력 */
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; font-weight: 600; font-size: 0.9rem; margin-bottom: 6px; }
+        .input-wrapper { display: flex; align-items: center; border: 1px solid var(--border); border-radius: 8px; background: #fff; overflow: hidden; }
+        .input-wrapper:focus-within { border-color: var(--primary); box-shadow: 0 0 0 2px rgba(30, 58, 138, 0.1); }
+        .input-wrapper input { flex: 1; border: none; padding: 10px; font-size: 1rem; text-align: right; outline: none; width: 100%; }
+        .input-wrapper .unit { padding: 0 12px; background: #f1f5f9; color: #64748b; font-size: 0.85rem; font-weight: 600; border-left: 1px solid var(--border); display: flex; align-items: center; height: 100%; }
+
+        /* 날짜 입력 (연.월.일) */
+        .date-inputs { display: flex; gap: 5px; align-items: center; }
+        .date-input { text-align: center; border: 1px solid var(--border); padding: 10px; border-radius: 6px; font-size: 1rem; outline: none; }
+        .date-input:focus { border-color: var(--primary); }
+        .date-sep { font-weight: bold; color: #cbd5e1; }
+        .y-input { width: 60px; } .m-input { width: 40px; } .d-input { width: 40px; }
+
+        /* 버튼 */
+        .calc-btn { width: 100%; padding: 15px; background: var(--primary); color: white; border: none; border-radius: 10px; font-weight: bold; font-size: 1.1rem; margin-top: 20px; cursor: pointer; transition: 0.2s; }
+        .calc-btn:hover { background: #1e40af; transform: translateY(-1px); }
+        .calc-btn:disabled { background: #94a3b8; cursor: not-allowed; }
+
+        /* 결과 패널 */
+        .result-panel { display: flex; flex-direction: column; gap: 20px; }
+        .score-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; }
+        .card { background: var(--card); padding: 20px; border-radius: 16px; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
+        .card-label { font-size: 0.9rem; color: #64748b; margin-bottom: 5px; }
+        .card-value { font-size: 1.3rem; font-weight: 800; color: var(--text); }
+
+        .chart-container { background: var(--card); padding: 20px; border-radius: 16px; height: 450px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
+        .log-container { background: var(--card); padding: 20px; border-radius: 16px; max-height: 250px; overflow-y: auto; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
+        .log-item { padding: 8px 0; border-bottom: 1px solid #f1f5f9; font-size: 0.9rem; display: flex; justify-content: space-between; }
+
+        /* 예측 정보 박스 */
+        .forecast-info { background: #eff6ff; border: 1px solid #bfdbfe; padding: 15px; border-radius: 8px; font-size: 0.9rem; color: #1e40af; margin-top: 15px; display: none; }
+
+        @media (max-width: 900px) { .container { grid-template-columns: 1fr; } .score-cards { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <!-- 왼쪽 입력 패널 -->
+    <div class="input-panel">
+        <h2>🛠 시뮬레이션 설정</h2>
+
+        <!-- [추가] 코랩 가이드 박스 -->
+        <div class="guide-box">
+            <div class="guide-header">
+                <div class="guide-title">💡 데이터 생성 가이드 (Google Colab)</div>
+                <a href="https://colab.research.google.com/#create=true" target="_blank" class="colab-link">🚀 코랩 열기</a>
+            </div>
+            <div class="code-wrapper">
+                <button class="copy-button" onclick="copyCode()">코드 복사</button>
+<div class="code-content" id="pythonCode">import yfinance as yf
+
+print("데이터 다운로드 중... 잠시만 기다려주세요.")
+
+# 1. QQQ 다운로드
+yf.download("QQQ", period="max", progress=False).to_csv("QQQ.csv")
+
+# 2. TQQQ 다운로드
+yf.download("TQQQ", period="max", progress=False).to_csv("TQQQ.csv")
+
+# 3. QLD 다운로드 (추가된 부분)
+yf.download("QLD", period="max", progress=False).to_csv("QLD.csv")
+
+print("✅ 완료! 왼쪽 폴더(📁) 아이콘을 눌러 QQQ, TQQQ, QLD 파일을 모두 다운로드하세요.")</div>
+            </div>
+        </div>
+
+        <div class="section-title">1. 전략 선택</div>
+        <div class="strat-selector">
+            <div class="strat-btn active-1" id="btnStrat1" onclick="setStrategy(1)">전략 1 (Switching)</div>
+            <div class="strat-btn" id="btnStrat2" onclick="setStrategy(2)">전략 2 (Hybrid)</div>
+        </div>
+
+        <div class="section-title">2. 데이터 파일 업로드</div>
+        <div class="file-group">
+            <div class="file-row">
+                <span class="file-label">QQQ</span>
+                <div class="file-input-box" id="boxQQQ">
+                    <span id="txtQQQ">파일 선택 (.csv)</span>
+                    <input type="file" accept=".csv" onchange="handleFile(this, 'QQQ')">
+                </div>
+            </div>
+            <div class="file-row">
+                <span class="file-label">TQQQ</span>
+                <div class="file-input-box" id="boxTQQQ">
+                    <span id="txtTQQQ">파일 선택 (.csv)</span>
+                    <input type="file" accept=".csv" onchange="handleFile(this, 'TQQQ')">
+                </div>
+            </div>
+            <div class="file-row">
+                <span class="file-label">QLD</span>
+                <div class="file-input-box" id="boxQLD">
+                    <span id="txtQLD">파일 선택 (.csv)</span>
+                    <input type="file" accept=".csv" onchange="handleFile(this, 'QLD')">
+                </div>
+            </div>
+        </div>
+
+        <div class="section-title">3. 투자 기간 (과거 ~ 미래)</div>
+        <div class="form-group">
+            <label>시작일</label>
+            <div class="date-inputs">
+                <input type="text" class="date-input y-input" id="sY" placeholder="YYYY" maxlength="4" oninput="autoTab(this, 'sM')">
+                <span class="date-sep">.</span>
+                <input type="text" class="date-input m-input" id="sM" placeholder="MM" maxlength="2" oninput="autoTab(this, 'sD')">
+                <span class="date-sep">.</span>
+                <input type="text" class="date-input d-input" id="sD" placeholder="DD" maxlength="2" oninput="autoTab(this, 'eY')">
+            </div>
+        </div>
+        <div class="form-group">
+            <label>종료일 (미래 입력 시 예측)</label>
+            <div class="date-inputs">
+                <input type="text" class="date-input y-input" id="eY" placeholder="YYYY" maxlength="4" oninput="autoTab(this, 'eM')">
+                <span class="date-sep">.</span>
+                <input type="text" class="date-input m-input" id="eM" placeholder="MM" maxlength="2" oninput="autoTab(this, 'eD')">
+                <span class="date-sep">.</span>
+                <input type="text" class="date-input d-input" id="eD" placeholder="DD" maxlength="2">
+            </div>
+        </div>
+
+        <div class="section-title">4. 자금 설정</div>
+        <div class="form-group">
+            <label>초기 투자금</label>
+            <div class="input-wrapper">
+                <input type="text" id="initCapital" value="10,000,000" onkeyup="formatComma(this)">
+                <span class="unit">KRW</span>
+            </div>
+        </div>
+        <div class="form-group">
+            <label>매월 적립금</label>
+            <div class="input-wrapper">
+                <input type="text" id="monthlyDeposit" value="200,000" onkeyup="formatComma(this)">
+                <span class="unit">KRW</span>
+            </div>
+        </div>
+        <div class="form-group">
+            <label>환율</label>
+            <div class="input-wrapper">
+                <input type="text" id="exchangeRate" value="1,400" onkeyup="formatComma(this)">
+                <span class="unit">원/$</span>
+            </div>
+        </div>
+
+        <div class="section-title">5. 전략 상세</div>
+        <div class="form-group">
+            <label>하락 스위칭 기준 (전고점 대비)</label>
+            <div class="input-wrapper">
+                <input type="number" id="dropTrigger" value="-25">
+                <span class="unit">%</span>
+            </div>
+        </div>
+        <div class="form-group">
+            <label>익절 기준 (직전 고점 대비)</label>
+            <div class="input-wrapper">
+                <input type="number" id="targetReturn" value="10">
+                <span class="unit">%</span>
+            </div>
+        </div>
+
+        <button class="calc-btn" id="btnRun" onclick="runAnalysis()" disabled>데이터 분석 실행</button>
+    </div>
+
+    <!-- 오른쪽 결과 패널 -->
+    <div class="result-panel">
+        <!-- 예측 모드일 때 안내 -->
+        <div class="forecast-info" id="forecastInfo">
+            <strong>🔮 미래 예측 모드 활성화</strong><br>
+            입력하신 종료일이 데이터 범위를 초과했습니다.<br>
+            과거 데이터에서 산출된 <strong>연평균 성장률(CAGR)</strong>을 바탕으로 미래 수익을 예측합니다.
+        </div>
+
+        <div class="score-cards">
+            <div class="card">
+                <div class="card-label">총 투자 원금</div>
+                <div class="card-value" id="resPrincipal">0 원</div>
+            </div>
+            <div class="card">
+                <div class="card-label">최종 평가액</div>
+                <div class="card-value" id="resFinal" style="color: var(--primary);">0 원</div>
+            </div>
+            <div class="card">
+                <div class="card-label">총 수익률</div>
+                <div class="card-value" id="resYield">0.0 %</div>
+            </div>
+        </div>
+
+        <div class="chart-container">
+            <canvas id="mainChart"></canvas>
+        </div>
+
+        <div class="log-container">
+            <div id="logList"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // --- 전역 변수 ---
+    const files = { QQQ: null, TQQQ: null, QLD: null };
+    let mergedData = []; // { date: Date, qqq, tqqq, qld }
+    let currentStrat = 1;
+    let chartInstance = null;
+
+    // --- UI 유틸리티 ---
+    function copyCode() {
+        const code = document.getElementById('pythonCode').innerText;
+        navigator.clipboard.writeText(code).then(() => alert("코드가 복사되었습니다!"));
+    }
+    function formatComma(input) {
+        let val = input.value.replace(/,/g, '');
+        if(!isNaN(val) && val !== '') input.value = Number(val).toLocaleString();
+    }
+    function getNum(id) { return parseFloat(document.getElementById(id).value.replace(/,/g, '')) || 0; }
+    function autoTab(el, nextId) {
+        if(el.value.length >= el.getAttribute('maxlength')) document.getElementById(nextId).focus();
+    }
+    function setStrategy(type) {
+        currentStrat = type;
+        document.getElementById('btnStrat1').className = type === 1 ? 'strat-btn active-1' : 'strat-btn';
+        document.getElementById('btnStrat2').className = type === 2 ? 'strat-btn active-2' : 'strat-btn';
+    }
+
+    // --- 파일 처리 ---
+    function handleFile(input, type) {
+        const file = input.files[0];
+        if(file) {
+            const reader = new FileReader();
+            reader.onload = e => {
+                files[type] = parseCSV(e.target.result);
+                document.getElementById('txt'+type).innerText = `✅ ${type} 로드됨`;
+                document.getElementById('box'+type).classList.add('done');
+                checkFilesReady();
+            };
+            reader.readAsText(file);
+        }
+    }
+
+    function parseCSV(text) {
+        const lines = text.trim().split('\n');
+        const data = [];
+        // 날짜(YYYY-MM-DD) 찾기 정규식
+        const dateRegex = /(\d{4}-\d{2}-\d{2})/;
+        
+        lines.forEach(line => {
+            const match = line.match(dateRegex);
+            if(match) {
+                const dateStr = match[1];
+                const parts = line.split(',');
+                // 가격 추출 (숫자인 항목 중 적절한 값, 보통 Close)
+                const nums = parts.map(p => parseFloat(p)).filter(n => !isNaN(n));
+                // 야후 데이터: Date, Open, High, Low, Close, Adj Close, Vol
+                // Adj Close가 있으면(6번째, idx 5) 좋지만, 보통 4번째(Close)를 씀
+                // 여기선 nums 배열 뒤쪽 값을 씀 (Close or Adj Close)
+                // nums가 [Open, High, Low, Close, AdjClose, Vol] 라면 length 6
+                let price = nums.length >= 4 ? nums[3] : nums[nums.length-1];
+                if(price) data.push({ date: dateStr, price: price });
+            }
+        });
+        return data;
+    }
+
+    function checkFilesReady() {
+        if(files.QQQ && files.TQQQ && files.QLD) {
+            document.getElementById('btnRun').disabled = false;
+            document.getElementById('btnRun').innerText = "데이터 분석 및 시뮬레이션 실행";
+            
+            // 데이터 병합 (교집합 날짜만)
+            mergeData();
+        }
+    }
+
+    function mergeData() {
+        const mapT = new Map(files.TQQQ.map(d => [d.date, d.price]));
+        const mapL = new Map(files.QLD.map(d => [d.date, d.price]));
+        mergedData = [];
+
+        files.QQQ.forEach(q => {
+            if(mapT.has(q.date) && mapL.has(q.date)) {
+                const parts = q.date.split('-');
+                mergedData.push({
+                    dateObj: new Date(parts[0], parts[1]-1, parts[2]),
+                    dateStr: q.date,
+                    qqq: q.price,
+                    tqqq: mapT.get(q.date),
+                    qld: mapL.get(q.date)
+                });
+            }
+        });
+        mergedData.sort((a, b) => a.dateObj - b.dateObj);
+        
+        // 기본 날짜 세팅
+        if(mergedData.length > 0) {
+            const s = mergedData[0].dateObj;
+            const e = mergedData[mergedData.length-1].dateObj;
+            document.getElementById('sY').value = s.getFullYear();
+            document.getElementById('sM').value = String(s.getMonth()+1).padStart(2,'0');
+            document.getElementById('sD').value = String(s.getDate()).padStart(2,'0');
+            document.getElementById('eY').value = e.getFullYear();
+            document.getElementById('eM').value = String(e.getMonth()+1).padStart(2,'0');
+            document.getElementById('eD').value = String(e.getDate()).padStart(2,'0');
+        }
+    }
+
+    // --- 분석 실행 ---
+    function runAnalysis() {
+        // 1. 날짜 파싱
+        const sDate = new Date(getNum('sY'), getNum('sM')-1, getNum('sD'));
+        const eDate = new Date(getNum('eY'), getNum('eM')-1, getNum('eD'));
+        
+        // 2. 과거 데이터 필터링
+        let simData = mergedData.filter(d => d.dateObj >= sDate);
+        if(simData.length === 0) { alert("시작일 이후의 데이터가 없습니다."); return; }
+
+        // 마지막 실제 데이터 날짜
+        const lastRealDate = mergedData[mergedData.length-1].dateObj;
+        const isFuture = eDate > lastRealDate;
+        
+        // 3. 미래 예측 데이터 생성 (필요시)
+        if(isFuture) {
+            document.getElementById('forecastInfo').style.display = 'block';
+            // 연평균 성장률(CAGR) 및 일일 변동성 계산 (QQQ 기준)
+            const startP = simData[0].qqq;
+            const endP = simData[simData.length-1].qqq;
+            const days = (simData[simData.length-1].dateObj - simData[0].dateObj) / (1000*3600*24);
+            const years = days / 365;
+            
+            // 일평균 성장률 (단순화)
+            const dailyGrowthQQQ = Math.pow(endP / startP, 1/days) - 1; 
+            
+            // 미래 데이터 생성 loop
+            let currDate = new Date(lastRealDate);
+            let lastQQQ = endP;
+            let lastTQQQ = simData[simData.length-1].tqqq;
+            let lastQLD = simData[simData.length-1].qld;
+
+            while(currDate < eDate) {
+                currDate.setDate(currDate.getDate() + 1); // 하루씩 증가
+                if(currDate.getDay() === 0 || currDate.getDay() === 6) continue; // 주말 제외
+
+                // QQQ 성장 (과거 평균 반영)
+                lastQQQ = lastQQQ * (1 + dailyGrowthQQQ);
+                // TQQQ, QLD는 레버리지 배수 적용 (단순 3배/2배 가정)
+                lastTQQQ = lastTQQQ * (1 + dailyGrowthQQQ * 3);
+                lastQLD = lastQLD * (1 + dailyGrowthQQQ * 2);
+
+                simData.push({
+                    dateObj: new Date(currDate),
+                    dateStr: currDate.toISOString().split('T')[0] + " (E)",
+                    qqq: lastQQQ,
+                    tqqq: lastTQQQ,
+                    qld: lastQLD,
+                    isForecast: true
+                });
+            }
+        } else {
+            document.getElementById('forecastInfo').style.display = 'none';
+            // 종료일까지만 자르기
+            simData = simData.filter(d => d.dateObj <= eDate);
+        }
+
+        // 4. 시뮬레이션 실행
+        simulate(simData);
+    }
+
+    function simulate(data) {
+        const initCapKRW = getNum('initCapital');
+        const monthlyKRW = getNum('monthlyDeposit');
+        const exRate = getNum('exchangeRate');
+        const dropTrigger = getNum('dropTrigger') / 100; // 음수값 (예: -0.25)
+        const targetReturn = getNum('targetReturn') / 100;
+
+        // 달러 환산
+        let cashUSD = 0;
+        let shares = { QQQ: 0, TQQQ: 0, QLD: 0 }; // 보유 수량
+        let totalPrincipalKRW = initCapKRW;
+
+        // 초기 매수
+        let initialUSD = initCapKRW / exRate;
+        
+        // 전략 변수
+        let mode = 'NORMAL'; // NORMAL or ATTACK
+        let lockedATH = 0; // 하락 직전 고점
+        let logs = [];
+        let history = []; // { date, equityKRW }
+        let ath = 0; // 시뮬레이션 내 ATH 추적
+
+        // 초기 포지션 설정
+        if(currentStrat === 1) {
+            // QQQ 100%
+            shares.QQQ = initialUSD / data[0].qqq;
+            logs.push(`[시작] 초기자금으로 QQQ 매수 ($${data[0].qqq.toFixed(2)})`);
+        } else {
+            // QLD 50%, Cash 50%
+            shares.QLD = (initialUSD * 0.5) / data[0].qld;
+            cashUSD = initialUSD * 0.5;
+            logs.push(`[시작] 초기자금 분산: QLD 50% / 현금 50%`);
+        }
+        ath = data[0].qqq;
+
+        // 루프
+        let lastMonth = -1;
+        
+        for(let i=0; i<data.length; i++) {
+            const day = data[i];
+            
+            // ATH 및 MDD 갱신
+            if(day.qqq > ath) {
+                // 복귀 후 신고가 갱신 시에만 ATH 업데이트 (하락 중엔 업데이트 안함 - 전략 로직용)
+                // 단순하게는 항상 갱신하되, 스위칭 시점의 ATH를 별도 저장(lockedATH)
+                ath = day.qqq; 
+            }
+            
+            // 스위칭 기준은 '직전 고점' 대비 하락. 
+            // 가장 높은 ATH를 기준으로 할지, 로컬 고점을 기준으로 할지는 선택이나 
+            // 보통 MDD는 역사적 고점 대비입니다.
+            let mdd = (day.qqq / ath) - 1;
+
+            // 월 적립 (매월 1일 혹은 첫 거래일)
+            if(day.dateObj.getMonth() !== lastMonth && i > 0) {
+                lastMonth = day.dateObj.getMonth();
+                totalPrincipalKRW += monthlyKRW;
+                let depositUSD = monthlyKRW / exRate;
+
+                if(currentStrat === 1) {
+                    // 전략 1 적립: 현재 모드에 따라 매수
+                    if(mode === 'NORMAL') shares.QQQ += depositUSD / day.qqq;
+                    else shares.TQQQ += depositUSD / day.tqqq;
+                } else {
+                    // 전략 2 적립
+                    if(mode === 'NORMAL') {
+                        // 5:5 분배
+                        shares.QLD += (depositUSD * 0.5) / day.qld;
+                        cashUSD += (depositUSD * 0.5);
+                    } else {
+                        // 공격모드: 전액 TQQQ (현금 대신 TQQQ 보유)
+                        // 여기서는 cashUSD 변수를 쓰지 않고 TQQQ shares를 늘림
+                        shares.TQQQ += depositUSD / day.tqqq;
+                    }
+                }
+            }
+
+            // --- 전략 트리거 체크 ---
+            if(currentStrat === 1) {
+                // [전략 1]
+                if(mode === 'NORMAL' && mdd <= dropTrigger * -1) {
+                    mode = 'ATTACK';
+                    lockedATH = ath; // 하락 직전 고점 저장
+                    // QQQ 전량 매도 -> TQQQ 매수
+                    let val = shares.QQQ * day.qqq;
+                    shares.QQQ = 0;
+                    shares.TQQQ = val / day.tqqq;
+                    logs.push(`[${day.dateStr}] 📉 스위칭 발동 (MDD ${(mdd*100).toFixed(1)}%): QQQ -> TQQQ 교체`);
+                } 
+                else if(mode === 'ATTACK') {
+                    // 익절: 직전 고점 대비 10% 상승
+                    let targetPrice = lockedATH * (1 + targetReturn);
+                    if(day.qqq >= targetPrice) {
+                        mode = 'NORMAL';
+                        // TQQQ 매도 -> QQQ 매수
+                        let val = shares.TQQQ * day.tqqq;
+                        shares.TQQQ = 0;
+                        shares.QQQ = val / day.qqq;
+                        logs.push(`[${day.dateStr}] 📈 목표달성 (QQQ $${day.qqq.toFixed(2)}): TQQQ 익절 -> QQQ 복귀`);
+                    }
+                }
+            } else {
+                // [전략 2]
+                if(mode === 'NORMAL' && mdd <= dropTrigger * -1) {
+                    mode = 'ATTACK';
+                    lockedATH = ath;
+                    // 보유 현금 전액 TQQQ 매수 (QLD 유지)
+                    if(cashUSD > 0) {
+                        shares.TQQQ = cashUSD / day.tqqq;
+                        cashUSD = 0;
+                        logs.push(`[${day.dateStr}] 📉 공격전환 (MDD ${(mdd*100).toFixed(1)}%): 현금 -> TQQQ 투입`);
+                    }
+                } 
+                else if(mode === 'ATTACK') {
+                    let targetPrice = lockedATH * (1 + targetReturn);
+                    if(day.qqq >= targetPrice) {
+                        mode = 'NORMAL';
+                        // TQQQ 매도 -> 현금화 & 리밸런싱 (QLD:Cash 1:1)
+                        let tqqqVal = shares.TQQQ * day.tqqq;
+                        let qldVal = shares.QLD * day.qld;
+                        let total = tqqqVal + qldVal;
+                        
+                        shares.TQQQ = 0;
+                        shares.QLD = (total * 0.5) / day.qld;
+                        cashUSD = total * 0.5;
+                        logs.push(`[${day.dateStr}] 📈 목표달성: TQQQ 익절 및 5:5 리밸런싱`);
+                    }
+                }
+            }
+
+            // 자산 평가 (KRW)
+            let currentEquityUSD = (shares.QQQ * day.qqq) + (shares.TQQQ * day.tqqq) + (shares.QLD * day.qld) + cashUSD;
+            let equityKRW = currentEquityUSD * exRate;
+            history.push({ date: day.dateStr, val: equityKRW, p: totalPrincipalKRW });
+        }
+
+        // 결과 표시
+        const final = history[history.length-1];
+        const profit = final.val - final.p;
+        const yield = (profit / final.p) * 100;
+
+        document.getElementById('resPrincipal').innerText = Math.round(final.p).toLocaleString() + " 원";
+        document.getElementById('resFinal').innerText = Math.round(final.val).toLocaleString() + " 원";
+        document.getElementById('resYield').innerText = yield.toFixed(2) + " %";
+        document.getElementById('resFinal').style.color = yield >= 0 ? '#ef4444' : '#3b82f6';
+
+        drawChart(history);
+        
+        // 로그 출력 (최근 100개만 표시하거나 스크롤)
+        const logHTML = logs.map(l => `<div class="log-item">${l}</div>`).join('');
+        document.getElementById('logList').innerHTML = logHTML;
+    }
+
+    function drawChart(data) {
+        const ctx = document.getElementById('mainChart').getContext('2d');
+        if(chartInstance) chartInstance.destroy();
+
+        // 데이터 샘플링 (너무 많으면 렉 걸림)
+        const step = Math.ceil(data.length / 1000) || 1;
+        const sampled = data.filter((_, i) => i % step === 0);
+
+        chartInstance = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: sampled.map(d => d.date),
+                datasets: [
+                    {
+                        label: '자산 평가액 (KRW)',
+                        data: sampled.map(d => Math.round(d.val)),
+                        borderColor: currentStrat===1 ? '#f59e0b' : '#10b981',
+                        backgroundColor: currentStrat===1 ? '#f59e0b1a' : '#10b9811a',
+                        fill: true,
+                        borderWidth: 2,
+                        pointRadius: 0
+                    },
+                    {
+                        label: '투자 원금',
+                        data: sampled.map(d => Math.round(d.p)),
+                        borderColor: '#94a3b8',
+                        borderWidth: 1,
+                        borderDash: [5,5],
+                        pointRadius: 0
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: { mode: 'index', intersect: false },
+                scales: { y: { beginAtZero: false } }
+            }
+        });
+    }
+</script>
+</body>
+</html>
