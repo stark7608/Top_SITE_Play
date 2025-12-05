@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>적립식 투자(DCA) 수익률 계산기 + 미래예측</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --primary: #2563eb; --bg: #f8fafc; --card: #fff; --border: #cbd5e1;
+            --text: #334155; --success: #10b981; --danger: #ef4444; --accent: #8b5cf6;
+        }
+        body { font-family: 'Pretendard', -apple-system, sans-serif; background: var(--bg); padding: 20px; color: var(--text); margin: 0; }
+        .container { max-width: 1000px; margin: 0 auto; display: grid; grid-template-columns: 350px 1fr; gap: 20px; }
+
+        /* 입력 패널 */
+        .input-panel { background: var(--card); padding: 25px; border-radius: 16px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); height: fit-content; }
+        h2 { margin-top: 0; font-size: 1.3rem; color: var(--primary); border-bottom: 2px solid var(--border); padding-bottom: 15px; margin-bottom: 20px; }
+
+        .section-title { font-size: 0.85rem; font-weight: 700; color: #64748b; margin: 20px 0 10px 0; text-transform: uppercase; letter-spacing: 0.5px; }
+
+        /* 파일 업로드 */
+        .file-box { position: relative; overflow: hidden; background: #f1f5f9; border: 1px dashed var(--primary); border-radius: 8px; padding: 15px; text-align: center; cursor: pointer; transition: 0.2s; }
+        .file-box:hover { background: #e0f2fe; }
+        .file-box input { position: absolute; width: 100%; height: 100%; top: 0; left: 0; opacity: 0; cursor: pointer; }
+        .file-status { font-size: 0.9rem; color: var(--primary); font-weight: bold; }
+
+        /* 폼 입력 */
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; font-weight: 600; font-size: 0.9rem; margin-bottom: 6px; }
+        .input-wrapper { display: flex; align-items: center; border: 1px solid var(--border); border-radius: 8px; background: #fff; overflow: hidden; }
+        .input-wrapper:focus-within { border-color: var(--primary); box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1); }
+        .input-wrapper input { flex: 1; border: none; padding: 10px; font-size: 1rem; text-align: right; outline: none; width: 100%; }
+        .input-wrapper .unit { padding: 0 12px; background: #f1f5f9; color: #64748b; font-size: 0.85rem; font-weight: 600; border-left: 1px solid var(--border); display: flex; align-items: center; height: 100%; }
+
+        /* 날짜 입력 */
+        .date-inputs { display: flex; gap: 5px; align-items: center; }
+        .date-input { text-align: center; border: 1px solid var(--border); padding: 10px; border-radius: 6px; font-size: 1rem; outline: none; }
+        .date-input:focus { border-color: var(--primary); }
+        .date-sep { font-weight: bold; color: #cbd5e1; }
+        .y-input { width: 60px; } .m-input { width: 40px; } .d-input { width: 40px; }
+
+        .calc-btn { width: 100%; padding: 15px; background: var(--primary); color: white; border: none; border-radius: 10px; font-weight: bold; font-size: 1.1rem; margin-top: 20px; cursor: pointer; transition: 0.2s; }
+        .calc-btn:hover { background: #1d4ed8; transform: translateY(-1px); }
+        .calc-btn:disabled { background: #94a3b8; cursor: not-allowed; }
+
+        /* 결과 패널 */
+        .result-panel { display: flex; flex-direction: column; gap: 20px; }
+        .score-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; }
+        .card { background: var(--card); padding: 20px; border-radius: 16px; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
+        .card-label { font-size: 0.9rem; color: #64748b; margin-bottom: 5px; }
+        .card-value { font-size: 1.4rem; font-weight: 800; color: var(--text); }
+
+        .cagr-info { background: #eff6ff; border: 1px solid #bfdbfe; padding: 15px; border-radius: 8px; font-size: 0.9rem; color: #1e40af; display: none; }
+
+        .chart-container { background: var(--card); padding: 20px; border-radius: 16px; height: 400px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
+        .log-container { background: var(--card); padding: 20px; border-radius: 16px; max-height: 300px; overflow-y: auto; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
+        .log-item { padding: 8px 0; border-bottom: 1px solid #f1f5f9; font-size: 0.9rem; display: flex; justify-content: space-between; }
+        .log-buy { color: #ef4444; font-weight: bold; background-color: #fef2f2; padding: 2px 6px; border-radius: 4px; }
+        .log-forecast { color: #8b5cf6; font-weight: bold; background-color: #f3e8ff; padding: 2px 6px; border-radius: 4px; }
+
+        @media (max-width: 900px) { .container { grid-template-columns: 1fr; } .score-cards { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <!-- 입력 패널 -->
+    <div class="input-panel">
+        <h2>🔮 적립식 & 미래예측 계산기</h2>
+
+        <div class="section-title">1. 차트 데이터 (CSV)</div>
+        <div class="file-box" id="fileBox">
+            <span class="file-status" id="fileText">📂 파일 선택 (QQQ, SPY 등)</span>
+            <input type="file" accept=".csv" onchange="handleFile(this)">
+        </div>
+
+        <div class="section-title">2. 투자 기간 (과거 ~ 미래)</div>
+        <div class="form-group">
+            <label>시작일</label>
+            <div class="date-inputs">
+                <input type="text" class="date-input y-input" id="sY" placeholder="YYYY" maxlength="4" oninput="autoTab(this, 'sM')">
+                <span class="date-sep">.</span>
+                <input type="text" class="date-input m-input" id="sM" placeholder="MM" maxlength="2" oninput="autoTab(this, 'sD')">
+                <span class="date-sep">.</span>
+                <input type="text" class="date-input d-input" id="sD" placeholder="DD" maxlength="2" oninput="autoTab(this, 'eY')">
+            </div>
+        </div>
+        <div class="form-group">
+            <label>종료일 (미래 날짜 입력 가능)</label>
+            <div class="date-inputs">
+                <input type="text" class="date-input y-input" id="eY" placeholder="YYYY" maxlength="4" oninput="autoTab(this, 'eM')">
+                <span class="date-sep">.</span>
+                <input type="text" class="date-input m-input" id="eM" placeholder="MM" maxlength="2" oninput="autoTab(this, 'eD')">
+                <span class="date-sep">.</span>
+                <input type="text" class="date-input d-input" id="eD" placeholder="DD" maxlength="2">
+            </div>
+        </div>
+
+        <div class="section-title">3. 납입 설정</div>
+        <div class="form-group">
+            <label>최초 납입금</label>
+            <div class="input-wrapper">
+                <input type="text" id="initCapital" value="10,000,000" onkeyup="formatComma(this)">
+                <span class="unit">KRW</span>
+            </div>
+        </div>
+        <div class="form-group">
+            <label>월별 납입액</label>
+            <div class="input-wrapper">
+                <input type="text" id="monthlyDeposit" value="1,000,000" onkeyup="formatComma(this)">
+                <span class="unit">KRW</span>
+            </div>
+        </div>
+        <div class="form-group">
+            <label>매월 납입일</label>
+            <div class="input-wrapper">
+                <input type="number" id="payDay" value="25" min="1" max="31">
+                <span class="unit">일</span>
+            </div>
+        </div>
+        <div class="form-group">
+            <label>환율</label>
+            <div class="input-wrapper">
+                <input type="text" id="exchangeRate" value="1,400" onkeyup="formatComma(this)">
+                <span class="unit">원/$</span>
+            </div>
+        </div>
+
+        <button class="calc-btn" id="btnRun" onclick="runCalculation()" disabled>수익률 계산하기</button>
+    </div>
+
+    <!-- 결과 패널 -->
+    <div class="result-panel">
+        <div class="cagr-info" id="cagrInfo">
+            <strong>📈 미래 예측 활성화</strong><br>
+            업로드된 데이터의 연평균 성장률(CAGR) <span id="cagrVal" style="font-weight:bold; color:#2563eb;"></span>%를 적용하여<br>
+            미래 구간의 수익률을 예측합니다.
+        </div>
+
+        <div class="score-cards">
+            <div class="card">
+                <div class="card-label">총 납입 원금</div>
+                <div class="card-value" id="resPrincipal">0 원</div>
+            </div>
+            <div class="card">
+                <div class="card-label">최종 평가액</div>
+                <div class="card-value" id="resFinal" style="color: var(--primary);">0 원</div>
+            </div>
+            <div class="card">
+                <div class="card-label">최종 수익률</div>
+                <div class="card-value" id="resYield">0.0 %</div>
+            </div>
+        </div>
+
+        <div class="chart-container">
+            <canvas id="mainChart"></canvas>
+        </div>
+
+        <div class="log-container">
+            <div id="logList"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let csvData = []; 
+    let chartInstance = null;
+
+    // UI Utils
+    function formatComma(input) {
+        let val = input.value.replace(/,/g, '');
+        if(!isNaN(val) && val !== '') input.value = Number(val).toLocaleString();
+    }
+    function getNum(id) { return parseFloat(document.getElementById(id).value.replace(/,/g, '')) || 0; }
+    function autoTab(el, nextId) {
+        if(el.value.length >= el.getAttribute('maxlength')) document.getElementById(nextId).focus();
+    }
+
+    // CSV Handling
+    function handleFile(input) {
+        const file = input.files[0];
+        if(file) {
+            const reader = new FileReader();
+            reader.onload = e => {
+                csvData = parseCSV(e.target.result);
+                if(csvData.length > 0) {
+                    document.getElementById('fileText').innerText = `✅ ${file.name} 로드됨`;
+                    document.getElementById('fileBox').style.background = "#ecfdf5";
+                    document.getElementById('fileBox').style.borderColor = "#10b981";
+                    document.getElementById('btnRun').disabled = false;
+                    
+                    // 날짜 자동 세팅
+                    const s = csvData[0].date;
+                    const e = csvData[csvData.length-1].date;
+                    document.getElementById('sY').value = s.getFullYear();
+                    document.getElementById('sM').value = String(s.getMonth()+1).padStart(2,'0');
+                    document.getElementById('sD').value = String(s.getDate()).padStart(2,'0');
+                    document.getElementById('eY').value = e.getFullYear();
+                    document.getElementById('eM').value = String(e.getMonth()+1).padStart(2,'0');
+                    document.getElementById('eD').value = String(e.getDate()).padStart(2,'0');
+                }
+            };
+            reader.readAsText(file);
+        }
+    }
+
+    function parseCSV(text) {
+        const lines = text.trim().split('\n');
+        const data = [];
+        const dateRegex = /(\d{4}-\d{2}-\d{2})/;
+        lines.forEach(line => {
+            const match = line.match(dateRegex);
+            if(match) {
+                const dateStr = match[1];
+                const parts = line.split(',');
+                const nums = parts.map(p => parseFloat(p)).filter(n => !isNaN(n));
+                let price = nums.length >= 4 ? nums[3] : nums[nums.length-1];
+                if(price) {
+                    const partsDate = dateStr.split('-');
+                    data.push({ 
+                        date: new Date(partsDate[0], partsDate[1]-1, partsDate[2]), 
+                        dateStr: dateStr, 
+                        price: price 
+                    });
+                }
+            }
+        });
+        return data.sort((a, b) => a.date - b.date);
+    }
+
+    // Main Calculation
+    function runCalculation() {
+        const sDate = new Date(getNum('sY'), getNum('sM')-1, getNum('sD'));
+        const eDate = new Date(getNum('eY'), getNum('eM')-1, getNum('eD'));
+        const initCapKRW = getNum('initCapital');
+        const monthlyKRW = getNum('monthlyDeposit');
+        const payDay = getNum('payDay');
+        const exRate = getNum('exchangeRate');
+
+        // 1. 실제 데이터 필터링
+        const lastRealDate = csvData[csvData.length-1].date;
+        let simData = csvData.filter(d => d.date >= sDate);
+        
+        // 2. 미래 예측 로직 (종료일이 데이터보다 미래일 때)
+        if (eDate > lastRealDate) {
+            // CAGR 계산 (전체 기간 기준)
+            const startP = csvData[0].price;
+            const endP = csvData[csvData.length-1].price;
+            const years = (lastRealDate - csvData[0].date) / (1000 * 60 * 60 * 24 * 365);
+            const cagr = Math.pow(endP / startP, 1/years) - 1;
+            const dailyGrowth = Math.pow(1 + cagr, 1/365) - 1;
+
+            // 안내 표시
+            document.getElementById('cagrInfo').style.display = 'block';
+            document.getElementById('cagrVal').innerText = (cagr * 100).toFixed(2);
+
+            // 미래 데이터 생성
+            let currDate = new Date(lastRealDate);
+            let currPrice = endP;
+            
+            while(currDate < eDate) {
+                currDate.setDate(currDate.getDate() + 1); // 하루 증가
+                
+                // 주말 제외 (선택사항이나, 주식 데이터처럼 보이게)
+                if(currDate.getDay() !== 0 && currDate.getDay() !== 6) {
+                    // 가격 성장 적용 (평일만 성장한다고 가정하거나, 365일 성장 적용 등 로직 선택 가능. 여기선 단순 적용)
+                    currPrice = currPrice * (1 + dailyGrowth); 
+                    
+                    simData.push({
+                        date: new Date(currDate),
+                        dateStr: currDate.toISOString().split('T')[0] + " (예상)",
+                        price: currPrice,
+                        isForecast: true
+                    });
+                }
+            }
+        } else {
+            document.getElementById('cagrInfo').style.display = 'none';
+            simData = simData.filter(d => d.date <= eDate);
+        }
+
+        if(simData.length === 0) { alert("기간 내 데이터가 없습니다."); return; }
+
+        // 3. 적립식 시뮬레이션
+        let totalShares = 0;
+        let totalPrincipalKRW = 0;
+        let history = [];
+        let logs = [];
+        let lastBoughtMonth = "";
+
+        // 초기 납입
+        if(initCapKRW > 0) {
+            const startPrice = simData[0].price;
+            const initUSD = initCapKRW / exRate;
+            totalShares += initUSD / startPrice;
+            totalPrincipalKRW += initCapKRW;
+            logs.push(`<div class="log-item"><span class="log-buy">최초매수</span><span>${simData[0].dateStr}: $${startPrice.toFixed(2)}에 ${initCapKRW.toLocaleString()}원</span></div>`);
+        }
+
+        // 일별 루프
+        for(let i=0; i<simData.length; i++) {
+            const day = simData[i];
+            // 종료일까지만 계산
+            if(day.date > eDate) break;
+
+            const currentMonth = `${day.date.getFullYear()}-${day.date.getMonth()+1}`;
+
+            // 매수 로직
+            if (day.date.getDate() >= payDay && currentMonth !== lastBoughtMonth) {
+                if (monthlyKRW > 0) {
+                    const depositUSD = monthlyKRW / exRate;
+                    totalShares += depositUSD / day.price;
+                    totalPrincipalKRW += monthlyKRW;
+                    lastBoughtMonth = currentMonth;
+                    
+                    const tagClass = day.isForecast ? "log-forecast" : "log-buy";
+                    const tagText = day.isForecast ? "예상매수" : "월적립";
+                    logs.push(`<div class="log-item"><span class="${tagClass}">${tagText}</span><span>${day.dateStr}: $${day.price.toFixed(2)}에 매수</span></div>`);
+                }
+            }
+
+            const equityKRW = (totalShares * day.price) * exRate;
+            history.push({ dateStr: day.dateStr, equity: equityKRW, principal: totalPrincipalKRW, isForecast: day.isForecast });
+        }
+
+        // 4. 결과
+        const final = history[history.length-1];
+        const profit = final.equity - final.principal;
+        const yield = (profit / final.principal) * 100;
+
+        document.getElementById('resPrincipal').innerText = Math.round(final.principal).toLocaleString() + " 원";
+        document.getElementById('resFinal').innerText = Math.round(final.equity).toLocaleString() + " 원";
+        document.getElementById('resYield').innerText = yield.toFixed(2) + " %";
+        document.getElementById('resYield').style.color = yield >= 0 ? '#ef4444' : '#2563eb';
+
+        document.getElementById('logList').innerHTML = logs.join('');
+        drawChart(history);
+    }
+
+    function drawChart(data) {
+        const ctx = document.getElementById('mainChart').getContext('2d');
+        if(chartInstance) chartInstance.destroy();
+
+        const step = Math.ceil(data.length / 500) || 1;
+        const sampled = data.filter((_, i) => i % step === 0);
+
+        chartInstance = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: sampled.map(d => d.dateStr.replace(" (예상)", "*")), // 차트 라벨 간소화
+                datasets: [
+                    {
+                        label: '평가금액 (KRW)',
+                        data: sampled.map(d => Math.round(d.equity)),
+                        borderColor: '#ef4444',
+                        backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                        fill: true,
+                        borderWidth: 2,
+                        pointRadius: 0,
+                        segment: {
+                            borderDash: ctx => ctx.p0.parsed.x > (data.findIndex(d=>d.isForecast)/step) ? [5, 5] : undefined // 예측 구간 점선 처리
+                        }
+                    },
+                    {
+                        label: '총 납입원금',
+                        data: sampled.map(d => Math.round(d.principal)),
+                        borderColor: '#334155',
+                        borderWidth: 1,
+                        borderDash: [5,5],
+                        pointRadius: 0
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: { mode: 'index', intersect: false },
+                scales: { y: { beginAtZero: false } }
+            }
+        });
+    }
+</script>
+</body>
+</html>
