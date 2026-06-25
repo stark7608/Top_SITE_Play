@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GAN BOX ENGINE v3 — 사용 매뉴얼 v2</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Noto+Sans+KR:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f0f2f7;--s1:#fff;--s2:#e8ecf4;--bd:#c8d0e0;
+  --tx:#14202e;--mt:#6b7a92;
+  --r:#b81c2c;--rl:#fce8ea;--rb:#e8a0a8;
+  --y:#8a5c00;--yl:#fdf0d8;--yb:#e0b860;
+  --g:#0f5c30;--gl:#e4f4ec;--gb:#80c09c;
+  --b:#0e3caa;--bl:#e0e8fc;--bb:#7ca0e0;
+  --o:#7a3200;--ol:#fff3e8;--ob:#f0b070;
+  --ink:#0a1828;
+}
+html{scroll-behavior:smooth}
+body{background:var(--bg);font-family:'Noto Sans KR',sans-serif;font-size:15px;color:var(--tx);line-height:1.7}
+.mono{font-family:'JetBrains Mono',monospace}
+.wrap{max-width:900px;margin:0 auto;padding:0 20px 80px}
+
+/* HERO */
+.hero{background:var(--ink);color:#fff;padding:48px 20px 40px}
+.hero-inner{max-width:900px;margin:0 auto}
+.hero-eyebrow{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.2em;color:#6ee0a0;text-transform:uppercase;margin-bottom:14px;font-weight:700}
+.hero-title{font-size:32px;font-weight:800;line-height:1.25;margin-bottom:14px}
+.hero-sub{font-size:14.5px;color:rgba(255,255,255,.65);line-height:1.75;max-width:640px}
+.hero-badge{display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);border-radius:99px;padding:7px 16px;margin-top:16px;font-size:12.5px;color:rgba(255,255,255,.85)}
+.version-tag{display:inline-block;background:#6ee0a0;color:#0a1828;font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;padding:3px 10px;border-radius:4px;margin-left:12px;vertical-align:middle}
+
+/* TOC */
+.toc{background:var(--s1);border:1.5px solid var(--bd);border-radius:12px;padding:20px 24px;margin:28px 0 36px;box-shadow:0 4px 20px rgba(20,32,46,.08)}
+.toc-title{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.16em;color:var(--mt);text-transform:uppercase;font-weight:700;margin-bottom:12px}
+.toc-list{display:grid;grid-template-columns:1fr 1fr;gap:6px 24px;list-style:none}
+.toc-list a{display:flex;gap:8px;align-items:baseline;color:var(--tx);text-decoration:none;font-size:13.5px;padding:4px 0;border-bottom:1px dashed transparent;transition:border-color .15s}
+.toc-list a:hover{border-color:var(--bd)}
+.toc-num{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--b);font-weight:700;flex-shrink:0}
+.toc-new{font-size:9px;font-weight:700;background:#6ee0a0;color:#0a1828;padding:1px 5px;border-radius:3px;margin-left:4px}
+
+/* SECTION */
+section{margin-bottom:44px}
+.sec-head{display:flex;align-items:baseline;gap:12px;margin-bottom:18px;padding-bottom:10px;border-bottom:2px solid var(--ink)}
+.sec-num{font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;color:#fff;background:var(--ink);width:30px;height:30px;border-radius:7px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.sec-title{font-size:21px;font-weight:800;color:var(--tx)}
+.lead{background:var(--s2);border-left:4px solid var(--b);border-radius:0 8px 8px 0;padding:14px 18px;font-size:14.5px;color:var(--tx);line-height:1.75;margin-bottom:18px}
+.lead b{color:var(--b)}
+p{margin-bottom:12px;font-size:14.5px}
+
+/* PANEL PREVIEW */
+.panel-preview{background:var(--ink);border-radius:10px;padding:0;overflow:hidden;margin:20px 0;box-shadow:0 6px 24px rgba(10,24,40,.25)}
+.panel-row{display:flex;justify-content:space-between;align-items:center;padding:9px 16px;border-bottom:1px solid rgba(255,255,255,.07);font-family:'JetBrains Mono',monospace;font-size:12.5px}
+.panel-row:last-child{border-bottom:none}
+.panel-row.head{background:rgba(255,255,255,.04)}
+.panel-row.new-row{background:rgba(110,224,160,.05);border-left:2px solid #6ee0a0}
+.panel-k{color:rgba(255,255,255,.5)}
+.panel-v{color:#fff;font-weight:700}
+.panel-v.g{color:#6ee0a0}.panel-v.r{color:#ff8888}.panel-v.y{color:#ffd060}
+.panel-new-badge{font-size:8px;background:#6ee0a0;color:#0a1828;padding:1px 5px;border-radius:3px;margin-left:6px;font-weight:700;vertical-align:middle}
+
+/* ITEM CARD */
+.item-card{background:var(--s1);border:1.5px solid var(--bd);border-radius:10px;padding:18px 20px;margin-bottom:14px}
+.item-card.warn{border-color:var(--ob);background:linear-gradient(180deg,var(--ol) 0%,var(--s1) 60px)}
+.item-card.new{border-color:#6ee0a0;background:linear-gradient(180deg,var(--gl) 0%,var(--s1) 60px)}
+.item-h{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.item-tag{font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;padding:3px 9px;border-radius:5px;background:var(--ink);color:#fff;flex-shrink:0}
+.item-tag.new-tag{background:#0f5c30}
+.item-title{font-size:15.5px;font-weight:700;color:var(--tx)}
+.item-formula{font-family:'JetBrains Mono',monospace;background:var(--s2);border:1px solid var(--bd);border-radius:6px;padding:10px 14px;font-size:12.5px;color:var(--tx);margin:10px 0;overflow-x:auto;white-space:pre}
+.item-body{font-size:14px;color:var(--mt);line-height:1.75}
+.item-body b{color:var(--tx);font-weight:600}
+
+/* RANGE TABLE */
+.range-table{width:100%;border-collapse:collapse;margin:12px 0;font-size:13.5px}
+.range-table th{background:var(--ink);color:#fff;padding:9px 14px;text-align:left;font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.05em;font-weight:700}
+.range-table td{padding:9px 14px;border-bottom:1px solid var(--bd)}
+.range-table tr:nth-child(even) td{background:var(--s2)}
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:8px}
+.dot.g{background:var(--g)}.dot.y{background:#8a5c00}.dot.r{background:var(--r)}
+
+/* CALLOUT */
+.callout{border-radius:10px;padding:16px 20px;margin:16px 0;display:flex;gap:14px;align-items:flex-start}
+.callout.warn{background:var(--yl);border:1.5px solid var(--yb)}
+.callout.danger{background:var(--rl);border:1.5px solid var(--rb)}
+.callout.info{background:var(--bl);border:1.5px solid var(--bb)}
+.callout.success{background:var(--gl);border:1.5px solid var(--gb)}
+.callout-icon{font-size:20px;flex-shrink:0;line-height:1}
+.callout-text{font-size:13.5px;line-height:1.75;color:var(--tx)}
+.callout-text b{font-weight:700}
+
+/* TICKER TABLE */
+.ticker-table{width:100%;border-collapse:collapse;font-size:13.5px;margin:16px 0}
+.ticker-table th{background:var(--ink);color:#fff;padding:10px 14px;text-align:left;font-family:'JetBrains Mono',monospace;font-size:10.5px;font-weight:700}
+.ticker-table td{padding:11px 14px;border-bottom:1px solid var(--bd);vertical-align:top}
+.ticker-table tr:nth-child(even) td{background:var(--s2)}
+.ticker-table td:first-child{font-family:'JetBrains Mono',monospace;font-weight:700;color:var(--b);white-space:nowrap}
+.ticker-badge{display:inline-block;font-size:10px;padding:2px 7px;border-radius:4px;font-weight:700;white-space:nowrap;margin:1px 2px}
+.tb-g{background:var(--gl);color:var(--g);border:1px solid var(--gb)}
+.tb-r{background:var(--rl);color:var(--r);border:1px solid var(--rb)}
+.tb-y{background:var(--yl);color:var(--y);border:1px solid var(--yb)}
+.tb-b{background:var(--bl);color:var(--b);border:1px solid var(--bb)}
+
+/* ENTRY/EXIT CARDS */
+.action-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:20px 0}
+.action-card{border-radius:10px;border:2px solid;overflow:hidden}
+.action-card.buy{border-color:var(--gb)}
+.action-card.sell{border-color:var(--rb)}
+.action-card.wait{border-color:var(--yb)}
+.action-head{padding:12px 16px;display:flex;align-items:center;gap:10px;font-weight:700;font-size:14px}
+.action-card.buy .action-head{background:var(--gl);color:var(--g)}
+.action-card.sell .action-head{background:var(--rl);color:var(--r)}
+.action-card.wait .action-head{background:var(--yl);color:var(--y)}
+.action-body{padding:14px 16px;background:var(--s1);font-size:13px;line-height:1.8;color:var(--mt)}
+.action-body b{color:var(--tx);font-weight:600}
+.cond-line{background:var(--s2);border-radius:6px;padding:6px 12px;margin:6px 0;font-size:12.5px;color:var(--tx);font-family:'JetBrains Mono',monospace}
+
+/* FLOW */
+.flow{display:flex;flex-direction:column;gap:0;margin:20px 0}
+.flow-step{display:flex;align-items:flex-start;gap:14px;padding:12px 0;position:relative}
+.flow-step:not(:last-child)::after{content:'';position:absolute;left:17px;top:42px;bottom:-12px;width:2px;background:var(--bd)}
+.flow-num{width:34px;height:34px;border-radius:50%;background:var(--b);color:#fff;font-family:'JetBrains Mono',monospace;font-weight:700;font-size:13px;display:flex;align-items:center;justify-content:center;flex-shrink:0;z-index:1}
+.flow-num.g{background:var(--g)}
+.flow-num.r{background:var(--r)}
+.flow-text{padding-top:6px}
+.flow-text b{display:block;font-size:14.5px;color:var(--tx);margin-bottom:2px}
+.flow-text span{font-size:13px;color:var(--mt)}
+
+/* SCENARIO */
+.scenario{border-radius:10px;padding:18px 20px;margin:14px 0;border:1.5px solid}
+.scenario.bad{background:var(--rl);border-color:var(--rb)}
+.scenario.good{background:var(--gl);border-color:var(--gb)}
+.scenario.neutral{background:var(--yl);border-color:var(--yb)}
+.scenario-h{font-size:14px;font-weight:700;margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.scenario.bad .scenario-h{color:var(--r)}
+.scenario.good .scenario-h{color:var(--g)}
+.scenario.neutral .scenario-h{color:var(--y)}
+.scenario-data{font-family:'JetBrains Mono',monospace;background:rgba(255,255,255,.6);border-radius:6px;padding:10px 14px;font-size:12.5px;margin-bottom:10px;line-height:1.8}
+.scenario-desc{font-size:13.5px;line-height:1.75;color:var(--tx)}
+
+/* STEP HIGHLIGHT */
+.step-box{background:var(--ink);color:#fff;border-radius:10px;padding:20px 24px;margin:16px 0}
+.step-box h4{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.15em;color:#6ee0a0;text-transform:uppercase;margin-bottom:12px}
+.step-line{display:flex;gap:12px;align-items:flex-start;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.07)}
+.step-line:last-child{border-bottom:none}
+.step-n{font-family:'JetBrains Mono',monospace;font-size:11px;color:#6ee0a0;font-weight:700;flex-shrink:0;min-width:24px;padding-top:2px}
+.step-t{font-size:13.5px;color:rgba(255,255,255,.9);line-height:1.65}
+.step-t b{color:#fff}
+.step-t .cond{color:#ffd060;font-family:'JetBrains Mono',monospace;font-size:12px}
+
+/* PARAM TABLE */
+.param-table{width:100%;border-collapse:collapse;font-size:13.5px;margin:14px 0}
+.param-table th{background:var(--ink);color:#fff;padding:10px 14px;text-align:left;font-family:'JetBrains Mono',monospace;font-size:10.5px;font-weight:700}
+.param-table td{padding:10px 14px;border-bottom:1px solid var(--bd)}
+.param-table td:first-child{font-family:'JetBrains Mono',monospace;font-weight:700;color:var(--b)}
+.param-table tr:nth-child(even) td{background:var(--s2)}
+
+/* QA */
+.qa{border:1.5px solid var(--bd);border-radius:10px;margin-bottom:10px;overflow:hidden}
+.qa-q{background:var(--s2);padding:13px 18px;font-weight:700;font-size:14px;display:flex;gap:10px}
+.qa-q span{color:var(--b);flex-shrink:0}
+.qa-a{padding:13px 18px;font-size:13.5px;color:var(--mt);line-height:1.75;background:var(--s1)}
+.qa-a b{color:var(--tx)}
+
+/* FOOTER */
+.footer{text-align:center;padding:30px 20px;color:var(--mt);font-size:12px;font-family:'JetBrains Mono',monospace}
+
+@media(max-width:640px){
+  .hero-title{font-size:24px}
+  .toc-list{grid-template-columns:1fr}
+  .sec-title{font-size:18px}
+  .action-grid{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="hero-inner">
+    <div class="hero-eyebrow">User Manual · v2.0 · 업데이트됨</div>
+    <div class="hero-title">GAN BOX ENGINE v3<br>사용 매뉴얼 <span class="version-tag">v2.0</span></div>
+    <div class="hero-sub">패널 항목 4개 추가 + 종목별 최적 설정 + 매수·매도 타이밍 상세 가이드를 반영한 개정판입니다. 이 지표는 매수신호기가 아닙니다. "지금 가격이 구조적으로 유리한 자리인가"를 판단하는 필터입니다.</div>
+    <div class="hero-badge">📌 <b>핵심 원칙</b> — 신호 없음 · 위치·위험도만 측정 · 판단은 사용자 몫</div>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <nav class="toc">
+    <div class="toc-title">목차</div>
+    <ul class="toc-list">
+      <li><a href="#sec1"><span class="toc-num">01</span>이 지표를 보는 순서</a></li>
+      <li><a href="#sec2"><span class="toc-num">02</span>패널 항목 전체 해설</a></li>
+      <li><a href="#sec3"><span class="toc-num">03</span>박스 방향 이해하기</a></li>
+      <li><a href="#sec4"><span class="toc-num">04</span>종목별 최적 설정 <span class="toc-new">NEW</span></a></li>
+      <li><a href="#sec5"><span class="toc-num">05</span>매수 타이밍 가이드 <span class="toc-new">NEW</span></a></li>
+      <li><a href="#sec6"><span class="toc-num">06</span>매도·손절 타이밍 가이드 <span class="toc-new">NEW</span></a></li>
+      <li><a href="#sec7"><span class="toc-num">07</span>상황별 조합 판단표</a></li>
+      <li><a href="#sec8"><span class="toc-num">08</span>입력값 파라미터</a></li>
+      <li><a href="#sec9"><span class="toc-num">09</span>자주 헷갈리는 것들</a></li>
+    </ul>
+  </nav>
+
+  <!-- ===== 01 보는 순서 ===== -->
+  <section id="sec1">
+    <div class="sec-head"><div class="sec-num">01</div><div class="sec-title">이 지표를 보는 순서 — 7단계</div></div>
+    <div class="lead">패널을 열면 숫자가 많아서 어디서 시작해야 할지 모를 수 있습니다. 이 순서대로만 보면 됩니다. <b>위에서 아래로, 하나씩.</b></div>
+
+    <div class="step-box">
+      <h4>패널 읽기 순서 (위 → 아래)</h4>
+      <div class="step-line"><span class="step-n">1</span><span class="step-t"><b>헤더 확인</b> — <span class="cond">UP-BOX</span> or <span class="cond">DN-BOX</span>? → 지금 올라가는 중인가, 내려가는 중인가</span></div>
+      <div class="step-line"><span class="step-n">2</span><span class="step-t"><b>FINAL SCORE 확인</b> — <span class="cond">70↑ 양호 / 40↓ 위험</span>. 이것만으로 80%의 판단이 가능</span></div>
+      <div class="step-line"><span class="step-n">3</span><span class="step-t"><b>EQS 확인</b> — 지금 박스 안에서 얼마나 올라왔는가. <span class="cond">60↑ = 아직 저가권 / 20↓ = 꼭대기 근처</span></span></div>
+      <div class="step-line"><span class="step-n">4</span><span class="step-t"><b>RR RATIO 확인</b> — <span class="cond">⚠️RISK</span> 뜨면 지금 자리는 손익비가 나쁨. 1.5 이상이면 괜찮음</span></div>
+      <div class="step-line"><span class="step-n">5</span><span class="step-t"><b>FAN SCORE 확인</b> — <span class="cond">N/A or 40↓</span>이면 지금 속도가 이상함. 70↑이면 정상 속도</span></div>
+      <div class="step-line"><span class="step-n">6</span><span class="step-t"><b>박스 진행 봉수 확인 (신규)</b> — <span class="cond">10봉 미만</span>이면 아직 초반, 패턴 확정 안 됨</span></div>
+      <div class="step-line"><span class="step-n">7</span><span class="step-t"><b>TP / SL 확인 (신규)</b> — 실제 목표가와 손절가를 차트에서 바로 확인 가능</span></div>
+    </div>
+  </section>
+
+  <!-- ===== 02 패널 항목 전체 해설 ===== -->
+  <section id="sec2">
+    <div class="sec-head"><div class="sec-num">02</div><div class="sec-title">패널 항목 전체 해설</div></div>
+
+    <div class="panel-preview">
+      <div class="panel-row head"><span class="panel-k">GAN BOX v3</span><span class="panel-v y">DN-BOX</span></div>
+      <div class="panel-row"><span class="panel-k">FINAL SCORE</span><span class="panel-v g">65</span></div>
+      <div class="panel-row"><span class="panel-k">EQS (Pos)</span><span class="panel-v y">50</span></div>
+      <div class="panel-row"><span class="panel-k">RR RATIO</span><span class="panel-v g">6.06</span></div>
+      <div class="panel-row new-row"><span class="panel-k">RR SCORE <span class="panel-new-badge">NEW</span></span><span class="panel-v g">100</span></div>
+      <div class="panel-row"><span class="panel-k">FAN SCORE</span><span class="panel-v g">59.91</span></div>
+      <div class="panel-row"><span class="panel-k">CONFIDENCE</span><span class="panel-v y">NORMAL (직전확정)</span></div>
+      <div class="panel-row"><span class="panel-k">CANDIDATE</span><span class="panel-v">71.35</span></div>
+      <div class="panel-row"><span class="panel-k">EMA20 / CLOSE</span><span class="panel-v">77.79 / 73.30</span></div>
+      <div class="panel-row new-row"><span class="panel-k">박스 진행 봉수 <span class="panel-new-badge">NEW</span></span><span class="panel-v y">2봉 경과</span></div>
+      <div class="panel-row new-row"><span class="panel-k">TP / SL <span class="panel-new-badge">NEW</span></span><span class="panel-v">85.11 / 71.35</span></div>
+      <div class="panel-row new-row"><span class="panel-k">FAN Baseline <span class="panel-new-badge">NEW</span></span><span class="panel-v g">8봉</span></div>
+    </div>
+    <p style="text-align:center;font-size:12px;color:var(--mt)">↑ TQQQ 1D 실제 패널 (2026-06-25 기준)</p>
+
+    <!-- 헤더 -->
+    <div class="item-card">
+      <div class="item-h"><span class="item-tag">2-1</span><span class="item-title">헤더 — UP-BOX / DN-BOX</span></div>
+      <div class="item-body">
+        <b>UP-BOX</b> : 저점이 확정되고 새 고점을 향해 올라가는 중 (상승 파동)<br>
+        <b>DN-BOX</b> : 고점이 확정되고 새 저점을 향해 내려가는 중 (하락 파동)<br><br>
+        ⚠️ 헷갈리기 쉬운 것 — DN-BOX일 때 화면의 <b>초록 박스</b>가 보이는 건 정상입니다. 그 초록 박스는 "방금 완성된 과거의 상승 구간"이고, DN-BOX는 "지금부터 내려가는 중"을 뜻합니다. 서로 다른 걸 가리킵니다.
+      </div>
+    </div>
+
+    <!-- FINAL SCORE -->
+    <div class="item-card">
+      <div class="item-h"><span class="item-tag">2-2</span><span class="item-title">FINAL SCORE — 가장 먼저, 가장 중요한 숫자</span></div>
+      <div class="item-formula">FINAL SCORE = 0.7 × EQS + 0.3 × RR SCORE</div>
+      <table class="range-table">
+        <tr><th>점수</th><th>의미</th><th>행동 기준</th></tr>
+        <tr><td><span class="dot g"></span>70 ~ 100</td><td>박스 하단 근처 + 손익비 양호</td><td>진입 검토 가능 구간</td></tr>
+        <tr><td><span class="dot y"></span>40 ~ 70</td><td>중간 구간 — 애매함</td><td>추가 조건 확인 후 판단</td></tr>
+        <tr><td><span class="dot r"></span>0 ~ 40</td><td>박스 상단 근처 또는 손익비 나쁨</td><td>신규 진입 자제</td></tr>
+      </table>
+    </div>
+
+    <!-- EQS -->
+    <div class="item-card">
+      <div class="item-h"><span class="item-tag">2-3</span><span class="item-title">EQS (Pos) — 박스 안에서 지금 가격의 위치</span></div>
+      <div class="item-formula">0점 = 박스 꼭대기 (가장 비쌈)
+100점 = 박스 바닥 (가장 쌈)
+
+UP-BOX일 때:  EQS 80 = 저가권 (아직 많이 안 올라온 상태)
+              EQS 15 = 고가권 (이미 많이 올라온 상태)
+
+DN-BOX + EMA20 아래:  최대 50점으로 자동 제한 (캡 적용)</div>
+      <div class="callout danger">
+        <div class="callout-icon">⚠️</div>
+        <div class="callout-text"><b>DN-BOX에서 EQS가 50점이라고 "저가권"이라고 오해하지 마세요.</b> EMA20 아래이면 50점 상한에 막혀 있는 것입니다. 실제로 얼마나 내려왔는지는 알 수 없고, 반등이 확인되기 전까지 50점이 최대입니다.</div>
+      </div>
+    </div>
+
+    <!-- RR RATIO -->
+    <div class="item-card">
+      <div class="item-h"><span class="item-tag">2-4</span><span class="item-title">RR RATIO — 손익비 (이길 때 얼마 버는가 vs 질 때 얼마 잃는가)</span></div>
+      <div class="item-formula">RR RATIO = 목표가(TP)까지 거리 ÷ 손절가(SL)까지 거리
+
+예시: 현재가 73.30 / TP 85.11 / SL 71.35
+  → 이익 여지 = 85.11 - 73.30 = 11.81
+  → 손실 여지 = 73.30 - 71.35 =  1.95
+  → RR = 11.81 / 1.95 = 6.06 ✓</div>
+      <table class="range-table">
+        <tr><th>표시</th><th>의미</th></tr>
+        <tr><td class="mono">RR 1.0 미만 + ⚠️RISK</td><td>잃을 금액이 벌 금액보다 크다 — 진입 자제</td></tr>
+        <tr><td class="mono">RR 1.0 ~ 2.0</td><td>보통 수준의 손익비</td></tr>
+        <tr><td class="mono">RR 2.0 이상</td><td>양호 — 구조적으로 좋은 자리</td></tr>
+        <tr><td class="mono">(FAIL) 표시</td><td>이전 박스 구조가 무효화됨 — 숫자 참고만, 신뢰 낮음</td></tr>
+      </table>
+    </div>
+
+    <!-- RR SCORE (NEW) -->
+    <div class="item-card new">
+      <div class="item-h"><span class="item-tag new-tag">2-5 NEW</span><span class="item-title">RR SCORE — 손익비를 0~100점으로 환산한 값</span></div>
+      <div class="item-formula">RR RATIO  < 1.0 → RR SCORE = 0점
+RR RATIO 1.0~2.0 → 50점~80점 (선형 비례)
+RR RATIO 2.0~3.0 → 80점~100점
+RR RATIO 3.0 이상 → RR SCORE = 100점 (상한)</div>
+      <div class="item-body">
+        RR SCORE는 FINAL SCORE 계산에 직접 쓰이는 값입니다 (<b>30% 비중</b>).<br>
+        패널에 별도로 표시되므로 "FINAL SCORE가 왜 이 숫자냐"를 역산할 때 활용하세요.
+      </div>
+    </div>
+
+    <!-- FAN SCORE -->
+    <div class="item-card">
+      <div class="item-h"><span class="item-tag">2-6</span><span class="item-title">FAN SCORE — 지금 파동 속도가 정상인가</span></div>
+      <div class="item-formula">직전 파동 속도와 현재 파동 속도를 비교
+
+100점 = 평소와 비슷한 속도 → 추세 안정적
+40~70점 = 약간 빠름 → 주의
+40점 미만 = 평소보다 2~4배 빠름 → 과열, 되돌림 주의
+N/A = 비교할 기준 파동이 너무 짧아서 측정 불가 (0점이 아님)</div>
+      <div class="callout warn">
+        <div class="callout-icon">💡</div>
+        <div class="callout-text"><b>N/A는 고장이 아닙니다.</b> "지금 너무 빠르게 움직여서 비교 기준 자체를 못 잡겠다"는 신호입니다. SOXL 같은 고변동성 종목에서는 정상적으로 자주 발생합니다.</div>
+      </div>
+    </div>
+
+    <!-- CONFIDENCE -->
+    <div class="item-card warn">
+      <div class="item-h"><span class="item-tag" style="background:var(--o)">2-7</span><span class="item-title">CONFIDENCE — 직전 확정 시점의 신뢰도</span></div>
+      <div class="item-body">
+        <b>HIGH</b> : 박스가 확정될 때 거래량 급증(상위 20%) + 추세 기울기 반전이 동시에 확인됨<br>
+        <b>NORMAL</b> : 확정은 됐지만 거래량이나 기울기 둘 중 하나가 약했음<br>
+        <b>N/A</b> : 데이터 100봉 미만 (계산 불가)<br><br>
+        <b>가장 중요한 주의사항</b> : 이 값은 "지금 이 순간"의 신뢰도가 아니라 <b>"가장 최근에 박스가 확정됐을 때"의 과거 신뢰도</b>입니다.
+      </div>
+    </div>
+
+    <!-- CANDIDATE -->
+    <div class="item-card">
+      <div class="item-h"><span class="item-tag">2-8</span><span class="item-title">CANDIDATE — 지금 파동의 아직 미확정 극값</span></div>
+      <div class="item-body">
+        <b>UP-BOX일 때</b> : 현재까지의 고점 후보 (계속 갱신될 수 있음)<br>
+        <b>DN-BOX일 때</b> : 현재까지의 저점 후보 (계속 갱신될 수 있음)<br><br>
+        이 값이 TP 또는 SL 기준이 되므로 매 봉 달라집니다.
+      </div>
+    </div>
+
+    <!-- 박스 진행 봉수 (NEW) -->
+    <div class="item-card new">
+      <div class="item-h"><span class="item-tag new-tag">2-9 NEW</span><span class="item-title">박스 진행 봉수 — 현재 파동이 시작된 지 얼마나 됐는가</span></div>
+      <div class="item-formula">현재 봉 번호 - 파동 시작 봉 번호 = 경과 봉수</div>
+      <table class="range-table">
+        <tr><th>봉수</th><th>의미</th><th>참고</th></tr>
+        <tr><td class="mono"><span class="dot r"></span>1 ~ 5봉</td><td>파동 극초반, 패턴 미형성</td><td>EQS·RR 수치가 크게 바뀔 수 있음</td></tr>
+        <tr><td class="mono"><span class="dot y"></span>5 ~ 10봉</td><td>초반, 구조 형성 중</td><td>신호 신뢰도 보통</td></tr>
+        <tr><td class="mono"><span class="dot g"></span>10봉 이상</td><td>파동이 충분히 진행됨</td><td>패턴이 안정화된 상태</td></tr>
+      </table>
+      <div class="item-body">
+        백테스트에서 "최소보유 10봉" 필터가 효과적이었던 이유가 바로 이것입니다.<br>
+        <b>박스 진행 봉수 10 미만이면 신호 신뢰도를 한 단계 낮춰서 보는 것이 안전합니다.</b>
+      </div>
+    </div>
+
+    <!-- TP / SL (NEW) -->
+    <div class="item-card new">
+      <div class="item-h"><span class="item-tag new-tag">2-10 NEW</span><span class="item-title">TP / SL — 목표가와 손절가</span></div>
+      <div class="item-formula">일반 상황 (돌파 없음):
+  TP = 박스 상단 (curTop)
+  SL = 박스 하단 (curBot)
+
+돌파 발생 시 (B/OUT UP or DN):
+  TP = 박스 상단 + 박스 높이
+  SL = 박스 상단 (돌파 기준선)</div>
+      <div class="item-body">
+        이 수치는 <b>매 봉 자동으로 업데이트</b>됩니다. CANDIDATE가 바뀔 때마다 TP·SL도 같이 바뀝니다.<br>
+        진입 전에 이 값을 기록해두고, 실제 주문 시 손절 라인으로 활용하세요.
+      </div>
+    </div>
+
+    <!-- FAN Baseline (NEW) -->
+    <div class="item-card new">
+      <div class="item-h"><span class="item-tag new-tag">2-11 NEW</span><span class="item-title">FAN Baseline — FAN SCORE 계산의 비교 기준이 된 봉수</span></div>
+      <div class="item-formula">설정값(minBaselineBars) 이상이면 → FAN SCORE 계산 가능
+설정값 미만이면           → FAN SCORE = N/A</div>
+      <div class="item-body">
+        FAN SCORE가 N/A로 뜨는 이유를 확인할 때 씁니다.<br>
+        <b>기준치: TQQQ 5봉, SOXL/TECL 3봉</b> (종목별 파라미터 참조)
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== 03 박스 방향 ===== -->
+  <section id="sec3">
+    <div class="sec-head"><div class="sec-num">03</div><div class="sec-title">박스 방향 이해하기 — 헷갈리는 분들을 위한 핵심 정리</div></div>
+
+    <div class="callout info">
+      <div class="callout-icon">💡</div>
+      <div class="callout-text">
+        <b>한 줄 요약:</b> 헤더(UP/DN-BOX)는 "지금부터 어디로 가는가"이고, 화면의 색칠된 박스는 "방금 끝난 과거 구간"입니다. 이 둘을 혼동하면 방향 판단이 반대로 뒤집힙니다.
+      </div>
+    </div>
+
+    <table class="range-table" style="margin-top:16px">
+      <tr><th>화면 요소</th><th>의미</th><th>언제 바뀌나</th></tr>
+      <tr><td><b>헤더 텍스트 (UP/DN-BOX)</b></td><td>지금 진행 중인 파동 방향</td><td>고점·저점 확정 시 즉시 전환</td></tr>
+      <tr><td><b>초록 박스 (실선)</b></td><td>가장 최근 확정된 상승 구간 (과거)</td><td>새 상승 박스 확정 시 교체</td></tr>
+      <tr><td><b>주황 박스 (실선)</b></td><td>가장 최근 확정된 하락 구간 (과거)</td><td>새 하락 박스 확정 시 교체</td></tr>
+      <tr><td><b>회색 박스 (실선)</b></td><td>직전 확정 박스 (참고용)</td><td>자동으로 밀려남</td></tr>
+      <tr><td><b>회색 점선 박스</b></td><td>지금 진행 중인 미확정 구간</td><td>매 봉 실시간 갱신</td></tr>
+    </table>
+
+    <div class="callout warn" style="margin-top:16px">
+      <div class="callout-icon">⚠️</div>
+      <div class="callout-text"><b>흔한 오해:</b> "DN-BOX인데 차트에 초록 박스가 있다 → 상승 아닌가?" → 아닙니다. 초록 박스는 방금 끝난 상승 구간이고, DN-BOX는 그 이후 지금부터 하락한다는 뜻입니다. 고점이 확정된 직후라서 헤더가 DN-BOX로 바뀐 것입니다.</div>
+    </div>
+  </section>
+
+  <!-- ===== 04 종목별 최적 설정 ===== -->
+  <section id="sec4">
+    <div class="sec-head"><div class="sec-num">04</div><div class="sec-title">종목별 최적 설정 — 종목마다 세팅이 달라야 합니다</div></div>
+
+    <div class="lead">백테스트 결과, 종목의 변동성 특성에 따라 최적 파라미터가 달라집니다. 아래 설정값을 TradingView 지표 설정창에서 직접 입력하세요.</div>
+
+    <table class="ticker-table">
+      <tr>
+        <th>종목</th>
+        <th>Swing %</th>
+        <th>minBaseline</th>
+        <th>추천 전략</th>
+        <th>근거</th>
+      </tr>
+      <tr>
+        <td>TQQQ</td>
+        <td><b>12%</b></td>
+        <td><b>5봉</b></td>
+        <td><span class="ticker-badge tb-g">최소보유 10봉</span></td>
+        <td>단타 노이즈 제거가 핵심. 10봉 미만 신호는 손절 빈도 높음</td>
+      </tr>
+      <tr>
+        <td>SOXL</td>
+        <td><b>12%</b></td>
+        <td><b>3봉</b></td>
+        <td><span class="ticker-badge tb-y">필터 없이 원본</span></td>
+        <td>반도체 3배 레버리지는 변동성 자체가 신호. 필터가 수익 기회 차단</td>
+      </tr>
+      <tr>
+        <td>TECL</td>
+        <td><b>12%</b></td>
+        <td><b>3봉</b></td>
+        <td><span class="ticker-badge tb-y">필터 없이 원본</span></td>
+        <td>SOXL과 동일 이유. 필터 적용 시 CAGR 저하 확인</td>
+      </tr>
+      <tr>
+        <td>삼성전자</td>
+        <td><b>12%</b></td>
+        <td><b>5봉</b></td>
+        <td><span class="ticker-badge tb-b">EMA200 트렌드 필터</span></td>
+        <td>개별주는 추세 방향이 중요. EMA200 아래에서 진입 자제 시 MDD 개선</td>
+      </tr>
+      <tr>
+        <td>HMM</td>
+        <td><b>12%</b></td>
+        <td><b>5봉</b></td>
+        <td><span class="ticker-badge tb-y">필터 없이 원본</span></td>
+        <td>부분청산 전략 시 CAGR 손해 더 큼. 원본이 가장 효율적</td>
+      </tr>
+      <tr>
+        <td>미래에셋증권</td>
+        <td><b>12%</b></td>
+        <td><b>5봉</b></td>
+        <td><span class="ticker-badge tb-r">ATR 손절 적용</span></td>
+        <td>불규칙 변동성. 박스 하단 고정 손절보다 ATR 2배 손절이 MDD 개선</td>
+      </tr>
+      <tr>
+        <td>KRX레버리지</td>
+        <td><b>12%</b></td>
+        <td><b>5봉</b></td>
+        <td><span class="ticker-badge tb-g">최소보유 10봉</span></td>
+        <td>TQQQ와 유사한 패턴. 동일 설정 적용</td>
+      </tr>
+    </table>
+
+    <div class="callout info">
+      <div class="callout-icon">ℹ️</div>
+      <div class="callout-text">
+        <b>파라미터 변경 위치:</b> TradingView → 지표 클릭 → 설정(톱니바퀴) → ⚙️ FSM 파라미터 탭<br>
+        <b>Swing %</b> : 파동 인식 최소 변동폭 (12%가 7종목 공통 최적값)<br>
+        <b>minBaselineBars</b> : FAN SCORE 계산을 위한 최소 비교 봉수 (SOXL/TECL은 단기 파동이 잦아 3봉으로 설정)
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== 05 매수 타이밍 ===== -->
+  <section id="sec5">
+    <div class="sec-head"><div class="sec-num">05</div><div class="sec-title">매수 타이밍 가이드 — 언제, 어떤 조건에서 들어갈 것인가</div></div>
+
+    <div class="lead">매수 타이밍은 <b>헤더(방향) × EQS(위치) × RR(손익비)</b> 세 가지가 동시에 맞아야 합니다. 하나라도 빠지면 "조건부 진입" 또는 "대기"입니다.</div>
+
+    <!-- 진입 Flow -->
+    <div class="flow">
+      <div class="flow-step">
+        <div class="flow-num g">1</div>
+        <div class="flow-text">
+          <b>헤더가 UP-BOX인지 확인</b>
+          <span>DN-BOX 상태에서는 신규 매수 고려 자체를 하지 않습니다. UP-BOX 전환이 확인될 때까지 대기.</span>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-num g">2</div>
+        <div class="flow-text">
+          <b>EQS가 60 이상인지 확인</b>
+          <span>60 미만이면 이미 많이 올라온 자리입니다. 특히 EQS 30 이하면 박스 상단 근처 — 추격매수 위험.</span>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-num g">3</div>
+        <div class="flow-text">
+          <b>RR RATIO 1.5 이상, ⚠️RISK 없는지 확인</b>
+          <span>⚠️RISK가 뜨면 손절 폭이 목표까지 거리보다 크다는 뜻. 이 조건 하나만으로 진입을 막아도 큰 손실을 방지합니다.</span>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-num g">4</div>
+        <div class="flow-text">
+          <b>박스 진행 봉수 10봉 이상인지 확인 (TQQQ·KRX레버리지)</b>
+          <span>10봉 미만이면 패턴이 아직 초반입니다. SOXL·TECL은 이 조건을 생략해도 됩니다.</span>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-num g">5</div>
+        <div class="flow-text">
+          <b>FAN SCORE 40 이상 (또는 N/A 허용) 확인</b>
+          <span>40 미만이면 지금 상승 속도가 과열 상태. 단기 되돌림 위험이 높습니다. N/A는 "모름"이므로 다른 조건이 충분히 좋으면 허용.</span>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-num g">6</div>
+        <div class="flow-text">
+          <b>FINAL SCORE 65 이상 확인 후 진입</b>
+          <span>위 조건이 모두 맞으면 FINAL SCORE는 자연스럽게 65 이상이 됩니다. 진입 시 SL은 패널의 SL 값으로 설정.</span>
+        </div>
+      </div>
+    </div>
+
+    <h3 style="font-size:15px;margin:28px 0 12px;color:var(--tx)">매수 시나리오별 판단</h3>
+
+    <div class="scenario good">
+      <div class="scenario-h">✅ 진입 적합 — 모든 조건 충족</div>
+      <div class="scenario-data">헤더: UP-BOX | EQS: 75 | RR: 2.8 (RISK 없음) | FAN: 85 | 박스 진행: 15봉 | FINAL: 82</div>
+      <div class="scenario-desc">
+        박스 하단 근처, 손익비 양호, 속도 정상, 충분한 봉수 경과. <b>평소 비중대로 진입 검토.</b><br>
+        SL은 패널 SL 값으로 설정. CONFIDENCE HIGH이면 신뢰도 추가로 높음.
+      </div>
+    </div>
+
+    <div class="scenario neutral">
+      <div class="scenario-h">🟡 절반 비중 진입 — 조건 일부 미충족</div>
+      <div class="scenario-data">헤더: UP-BOX | EQS: 55 | RR: 1.8 (RISK 없음) | FAN: N/A | 박스 진행: 7봉 | FINAL: 62</div>
+      <div class="scenario-desc">
+        구조는 괜찮지만 FAN 측정 불가 + 봉수 부족. 모멘텀 확인이 안 된 상태.<br>
+        <b>절반 비중으로만 진입하거나, FAN이 측정되고 10봉 이상 경과 후 재판단.</b>
+      </div>
+    </div>
+
+    <div class="scenario bad">
+      <div class="scenario-h">🔴 진입 금지 — 핵심 조건 위반</div>
+      <div class="scenario-data">헤더: UP-BOX | EQS: 18 | RR: 0.45 ⚠️RISK | FAN: 30 | FINAL: 26</div>
+      <div class="scenario-desc">
+        박스 꼭대기 근처(EQS 낮음) + 손익비 최악(⚠️RISK) + 과열 속도(FAN 30). <b>절대 진입 금지.</b><br>
+        다음 조정이 나와서 EQS가 60 이상으로 회복될 때 재검토.
+      </div>
+    </div>
+
+    <div class="callout success" style="margin-top:20px">
+      <div class="callout-icon">📌</div>
+      <div class="callout-text">
+        <b>매수 원칙 한 줄 요약:</b><br>
+        UP-BOX + EQS 60↑ + RR 1.5↑ (⚠️RISK 없음) → "구조적으로 괜찮은 자리"<br>
+        이 세 가지만 지켜도 가장 위험한 추격매수는 막을 수 있습니다.
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== 06 매도·손절 타이밍 ===== -->
+  <section id="sec6">
+    <div class="sec-head"><div class="sec-num">06</div><div class="sec-title">매도·손절 타이밍 가이드 — 언제, 어떤 조건에서 나올 것인가</div></div>
+
+    <div class="lead">매도는 <b>세 가지 상황</b>으로 나뉩니다: 목표 달성 익절 / 구조 무효화 손절 / 파동 전환 청산. 미리 기준을 정해두지 않으면 실전에서 결정을 못 합니다.</div>
+
+    <div class="action-grid">
+      <div class="action-card sell">
+        <div class="action-head">💥 손절 — 지금 즉시 나와야 할 때</div>
+        <div class="action-body">
+          <div class="cond-line">가격이 SL(패널 값) 아래로 종가 마감</div>
+          <div class="cond-line">헤더가 DN-BOX로 전환</div>
+          <div class="cond-line">RR RATIO에 ⚠️RISK + (FAIL) 동시 표시</div>
+          <br>
+          <b>행동:</b> 기다리지 말고 즉시 청산. "혹시 반등하지 않을까"는 가장 위험한 생각입니다. 손절 라인은 진입 전에 미리 TP/SL 패널 값으로 확인해두세요.
+        </div>
+      </div>
+
+      <div class="action-card buy" style="border-color:var(--gb)">
+        <div class="action-head" style="background:var(--gl);color:var(--g)">🎯 익절 — 목표 달성 시</div>
+        <div class="action-body">
+          <div class="cond-line">가격이 TP(패널 값)에 도달</div>
+          <div class="cond-line">헤더 DN-BOX 전환 확인 시 청산</div>
+          <div class="cond-line">EQS가 15 이하로 떨어짐 (꼭대기 도달)</div>
+          <br>
+          <b>행동:</b> TP 도달 시 전량 익절이 원칙. 욕심을 내서 더 올라가길 기다리면 박스 구조가 무효화될 위험이 있습니다.
+        </div>
+      </div>
+    </div>
+
+    <h3 style="font-size:15px;margin:24px 0 12px;color:var(--tx)">부분 익절 전략 (TQQQ·삼성전자에 추천)</h3>
+    <div class="step-box">
+      <h4>부분 청산 2단계 순서</h4>
+      <div class="step-line"><span class="step-n">1단계</span><span class="step-t"><b>EMA20 회복 시 50% 청산</b> — EMA20(패널 EMA20 값) 위로 종가 마감 시 절반 익절로 수익 확정</span></div>
+      <div class="step-line"><span class="step-n">2단계</span><span class="step-t"><b>TP 도달 시 나머지 50% 청산</b> — 패널 TP 값에 도달하면 나머지 전량 청산</span></div>
+      <div class="step-line"><span class="step-n">손절</span><span class="step-t"><b>SL 이탈 시 잔여분 즉시 손절</b> — 1단계 이후 잔여분이 SL 아래로 내려가면 즉시 청산</span></div>
+    </div>
+    <div class="callout info">
+      <div class="callout-icon">ℹ️</div>
+      <div class="callout-text">
+        부분 익절 전략 결과: TQQQ 기준 CAGR +40% → +24%로 수익률은 낮아지지만, MDD -63% → -45%로 심리적 부담이 크게 줄어듭니다. 수익률을 16%p 희생하고 심리적 안정을 얻는 트레이드오프입니다. 삼성전자는 MDD 개선 효과가 더 뚜렷합니다.
+      </div>
+    </div>
+
+    <h3 style="font-size:15px;margin:24px 0 12px;color:var(--tx)">미래에셋증권 — ATR 손절 방법</h3>
+    <div class="step-box">
+      <h4>ATR 손절 설정 방법</h4>
+      <div class="step-line"><span class="step-n">①</span><span class="step-t">TradingView에서 ATR(14) 보조지표 추가</span></div>
+      <div class="step-line"><span class="step-n">②</span><span class="step-t">진입가 - (ATR 값 × 2) = 손절 라인으로 설정</span></div>
+      <div class="step-line"><span class="step-n">③</span><span class="step-t">GAN BOX SL보다 ATR 손절 라인이 유연하므로 불필요한 손절을 줄여줌</span></div>
+    </div>
+
+    <h3 style="font-size:15px;margin:24px 0 12px;color:var(--tx)">손절 후 재진입 원칙</h3>
+    <div class="scenario neutral">
+      <div class="scenario-h">🔄 손절 후 다시 들어가도 되는 조건</div>
+      <div class="scenario-data">헤더 UP-BOX 복귀 확인 + EQS 60↑ + RR ⚠️RISK 없음 + 박스 새로 형성 확인</div>
+      <div class="scenario-desc">
+        손절이 나왔다고 해서 전략이 틀린 것이 아닙니다. 구조가 다시 형성되면 재진입할 수 있습니다.<br>
+        <b>단, 연속 손절 후에는 포지션 크기를 절반으로 줄여서 진입하는 것이 리스크 관리 원칙입니다.</b>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== 07 상황별 조합 판단표 ===== -->
+  <section id="sec7">
+    <div class="sec-head"><div class="sec-num">07</div><div class="sec-title">상황별 조합 판단표 — 이 조합이 뜰 때 어떻게 행동하는가</div></div>
+
+    <table class="ticker-table">
+      <tr><th>상황</th><th>패널 조합</th><th>행동</th></tr>
+      <tr>
+        <td>🟢 최선의 진입</td>
+        <td>UP-BOX · EQS 70↑ · RR 2.0↑ · FAN 70↑ · FINAL 70↑</td>
+        <td>평소 비중대로 진입. CONF HIGH이면 신뢰도 추가 상승</td>
+      </tr>
+      <tr>
+        <td>🟡 신중한 진입</td>
+        <td>UP-BOX · EQS 40~70 · RR 1.0↑ · FAN N/A</td>
+        <td>절반 비중 또는 FAN 측정 가능해질 때까지 대기</td>
+      </tr>
+      <tr>
+        <td>🔴 추격 금지</td>
+        <td>UP-BOX · EQS 20↓ · ⚠️RISK · FINAL 40↓</td>
+        <td>진입 자제. 다음 조정 후 EQS 회복 시 재진입</td>
+      </tr>
+      <tr>
+        <td>🟠 하락 중 관심</td>
+        <td>DN-BOX · EQS 50(캡) · RR 1.5↑ · CONF HIGH</td>
+        <td>아직 진입 금지. UP-BOX 전환 신호 기다리기</td>
+      </tr>
+      <tr>
+        <td>💥 긴급 손절</td>
+        <td>하방 돌파 or 상승 구조 무효화 · FINAL 30↓</td>
+        <td>기존 포지션 즉시 손절 또는 비중 절반 축소</td>
+      </tr>
+      <tr>
+        <td>🚀 상방 돌파</td>
+        <td>B/OUT UP · FAN 60↑</td>
+        <td>소량 분할 진입 가능. FAN 40↓이면 과열 추격 자제</td>
+      </tr>
+      <tr>
+        <td>⏳ 봉수 부족</td>
+        <td>박스 진행 봉수 10봉 미만 (TQQQ·KRX레버리지)</td>
+        <td>10봉 이상 경과까지 진입 보류. 지표 신뢰도 낮음</td>
+      </tr>
+    </table>
+  </section>
+
+  <!-- ===== 08 파라미터 ===== -->
+  <section id="sec8">
+    <div class="sec-head"><div class="sec-num">08</div><div class="sec-title">입력값(파라미터) 설명</div></div>
+
+    <table class="param-table">
+      <tr><th>파라미터</th><th>기본값</th><th>의미</th></tr>
+      <tr><td>Swing %</td><td>12.0</td><td>이 비율 이상 가격이 움직여야 스윙(파동)으로 인정. 낮출수록 신호 많아지지만 노이즈 증가</td></tr>
+      <tr><td>EMA Length</td><td>20</td><td>추세 판단 기준 이동평균 기간</td></tr>
+      <tr><td>Lag Window</td><td>20</td><td>조건 발생 후 나머지 조건이 몇 봉 안에 충족돼야 같은 파동으로 인정할지</td></tr>
+      <tr><td>최소 Baseline 봉수</td><td>5 (SOXL/TECL은 3)</td><td>FAN SCORE 계산을 위한 직전 파동 최소 길이. 이 값 미만이면 FAN = N/A</td></tr>
+      <tr><td>박스 우측 여백</td><td>15</td><td>진행 중 박스를 화면에 얼마나 연장해 표시할지 (시각 옵션, 계산 무관)</td></tr>
+    </table>
+
+    <div class="callout warn">
+      <div class="callout-icon">💡</div>
+      <div class="callout-text">
+        <b>Swing %를 낮추면 거래가 늘어나는 대신 수익이 오히려 나빠집니다.</b> 6% → 연 9.4건이지만 CAGR +18.5%, 12% → 연 6.7건이지만 CAGR +35.2%, 18% → 연 4.3건이지만 CAGR +43.9%. 거래 횟수가 적은 것은 문제가 아니라 설계 의도입니다.
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== 09 Q&A ===== -->
+  <section id="sec9">
+    <div class="sec-head"><div class="sec-num">09</div><div class="sec-title">자주 헷갈리는 것들 — Q&A</div></div>
+
+    <div class="qa">
+      <div class="qa-q"><span>Q.</span>DN-BOX인데 매수해도 되나요?</div>
+      <div class="qa-a">원칙상 <b>DN-BOX에서 신규 매수는 하지 않습니다.</b> EQS가 높아 보여도 EMA20 아래면 50점 캡이 적용된 것이고, 아직 저점이 어디인지 모릅니다. UP-BOX로 전환될 때까지 기다리는 게 맞습니다.</div>
+    </div>
+
+    <div class="qa">
+      <div class="qa-q"><span>Q.</span>FINAL SCORE 65인데 들어가도 되나요?</div>
+      <div class="qa-a">65는 "애매한 중간 구간(40~70)"입니다. EQS, RR, FAN 세 가지를 추가로 확인해야 합니다. EQS 60↑ + ⚠️RISK 없음 + FAN 40↑이면 절반 비중으로 진입할 수 있습니다. FINAL 70 이상이 나오는 자리가 구조적으로 가장 좋은 자리입니다.</div>
+    </div>
+
+    <div class="qa">
+      <div class="qa-q"><span>Q.</span>FAN SCORE N/A가 자주 뜨는데 고장인가요?</div>
+      <div class="qa-a">아닙니다. SOXL 같은 고변동성 종목에서 직전 파동이 1~2봉 만에 끝나면 비교 기준을 못 잡아서 N/A가 정상적으로 발생합니다. "0점"이 아니라 "측정 불가"입니다. FAN Baseline 패널에서 봉수가 설정값 미만인지 확인하면 이유를 알 수 있습니다.</div>
+    </div>
+
+    <div class="qa">
+      <div class="qa-q"><span>Q.</span>TP/SL 숫자가 매 봉마다 바뀝니다. 언제 기준으로 잡아야 하나요?</div>
+      <div class="qa-a">진입 시점의 TP/SL을 기록해서 그 값을 손절 기준으로 씁니다. 이후 CANDIDATE가 유리한 방향으로 갱신되면 SL을 따라 올려가는 트레일링 방식을 쓸 수 있습니다. 단, SL을 손절 없이 계속 낮추는 방향으로 조정하면 안 됩니다.</div>
+    </div>
+
+    <div class="qa">
+      <div class="qa-q"><span>Q.</span>박스 진행 봉수가 3봉인데 다른 조건이 다 좋으면 들어가도 되나요?</div>
+      <div class="qa-a">SOXL·TECL은 가능합니다. 하지만 TQQQ·KRX레버리지는 10봉 미만 신호의 손절 빈도가 높다는 백테스트 결과가 있으므로, <b>10봉 이상 경과 후 진입하거나 절반 비중으로만 진입하는 것이 안전합니다.</b></div>
+    </div>
+
+    <div class="qa">
+      <div class="qa-q"><span>Q.</span>연간 거래 횟수가 6~7번밖에 안 되는데 너무 적지 않나요?</div>
+      <div class="qa-a">적어 보이지만 설계 의도에 맞는 빈도입니다. 거래를 늘리려면 Swing %를 낮추는 게 아니라 <b>타임프레임을 낮추는 것(1H → 4H → 1D 순으로 올리면 신호 감소)</b>이 올바른 방향입니다. 1H 봉 사용 시 이론상 신호가 6~8배 늘어납니다. 단, 타임프레임이 짧을수록 노이즈도 증가합니다.</div>
+    </div>
+  </section>
+
+</div>
+
+<div class="footer">GAN BOX ENGINE v3 · User Manual v2.0 · 업데이트: 2026-06-25</div>
+
+</body>
+</html>
